@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Replacement for the firmware's T2launcher.apk, same package name so the vendor start action and
+  any stored shortcut keep working. It must not declare HOME. A LAUNCHER entry is retained for vendor package lookups;
+  Aerial excludes this compatibility package from its own grid.
+  Theme.NoDisplay: the activity only forwards and finishes, it must never flash a window.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.stv.launcher"
+    android:versionCode="3"
+    android:versionName="3.0-aerial18">
+
+    <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18" />
+
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+
+        <activity
+            android:name=".Launcher"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:stateNotNeeded="true"
+            android:theme="@android:style/Theme.NoDisplay">
+
+            <!-- Original T2launcher was MAIN+DEFAULT (firmware started it explicitly). -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- The vendor action the firmware/shortcuts may still send. -->
+            <intent-filter>
+                <action android:name="com.stv.launcher.action.start" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <service android:name=".service.ShowTitleService" android:exported="true" />
+    </application>
+</manifest>

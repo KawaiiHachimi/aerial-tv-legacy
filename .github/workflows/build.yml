@@ -1,0 +1,31 @@
+name: Build Android 4.3 launcher
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android build dependencies
+        run: |
+          printf 'y\ny\ny\ny\ny\ny\ny\ny\ny\ny\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-18" "build-tools;36.0.0"
+      - name: Test layout model
+        run: ./tests/run.sh
+      - name: Build development APKs
+        run: ./build.sh --with-bridge
+      - uses: actions/upload-artifact@v7
+        with:
+          name: development-apks
+          path: dist/

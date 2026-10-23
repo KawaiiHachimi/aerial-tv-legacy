@@ -1,0 +1,18 @@
+Aerial TV Legacy
+Copyright (c) 2026 KawaiiHachimi — Android 4.3 compatibility work.
+
+This independent compatibility project is based on and pays tribute to:
+  Aerial, Copyright (c) 2026 pengchujin
+  https://github.com/pengchujin/aerial-tv
+  Reference revision: 484b59f5d744381128f0e6216f05a43075a8a941
+  License: MIT (LICENSE-Aerial.txt)
+
+Google Sans Regular and Medium, official Android static files, release v14.000:
+  https://github.com/googlefonts/googlesans/releases/tag/v14.000
+  License: SIL Open Font License 1.1 (LICENSE-GoogleSans.txt; also bundled in the APK)
+
+Material Symbols Rounded paths:
+  https://github.com/google/material-design-icons
+  License: Apache License 2.0 (LICENSE-MaterialSymbols.txt)
+
+No proprietary LeTV binaries or firmware images are distributed by this repository.
