@@ -16,3 +16,13 @@ Material Symbols Rounded paths:
   License: Apache License 2.0 (LICENSE-MaterialSymbols.txt)
 
 No proprietary LeTV binaries or firmware images are distributed by this repository.
+
+QR Code generator, Copyright (c) Project Nayuki, MIT:
+  https://github.com/nayuki/QR-Code-generator
+  Pinned revision 3c6d0b3cefb4e049dc337e82237c9644399716a8
+  API18 edits documented in LICENSE-QR-Code-generator.txt.
+
+Conscrypt Android 2.5.3, Android Open Source Project, Apache-2.0:
+  https://github.com/google/conscrypt/tree/2.5.3
+  Unmodified Maven classes and ARMv7 / x86 native libraries; SHA-256 provenance in third_party/conscrypt/.
+  License/NOTICE and Apache Harmony/Netty notices are also bundled in the APK assets/licenses/.

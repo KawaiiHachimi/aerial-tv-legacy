@@ -51,9 +51,17 @@
     <string name="remote_hint">让桌面更合心意</string>
     <string name="personal_hint">上下选择设置|左右或确定更改|返回控制中心</string>
     <string name="compatibility_short">Aerial · Android 4.3 兼容版</string>
-    <string name="compatibility_note">此版本支持离线壁纸和时钟屏保，暂不支持视频、天气与手机配置。</string>
+    <string name="compatibility_note">支持必应每日壁纸、离线壁纸、手机传图和时钟屏保。本版本暂不支持航拍视频和天气。</string>
     <string name="hidden_hint">按确定将应用重新显示在主屏幕</string>
     <string name="folder_hint">确定打开 · 菜单键整理</string>
     <string name="empty_collection">这里还没有应用</string>
     <string name="wallpaper_names">山丘·黎明|山丘·暮色|山丘·晨雾|山丘·夜|沙丘·金色|沙丘·月夜|海·日落|海·晴空|波浪·深蓝|波浪·珊瑚|波浪·紫罗兰|光晕·柔粉|极光|光晕·青柠|暮色山丘</string>
+    <string name="bing_daily">必应每日壁纸</string>
+    <string name="phone_photo">手机照片</string>
+    <string name="phone_setup">手机配置</string>
+    <string name="phone_hint">手机与电视连接同一网络后扫码，可选壁纸、上传照片和调整桌面。关闭此窗口后，链接会自动失效。</string>
+    <string name="phone_unavailable">请连接局域网后重试。</string>
+    <string name="bing_unavailable">暂时无法获取必应壁纸，已保留上次图片或内置壁纸。</string>
+    <string name="desktop_home">桌面</string>
+    <string name="names_none">全部隐藏</string>
 </resources>

@@ -17,6 +17,7 @@ final class LegacyInputs {
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
   }
   static boolean open(Context context) {
+    LegacyDesktop.initialize(context, false);
     Intent intent = letvIntent();
     try {
       context.getPackageManager().getActivityInfo(intent.getComponent(), 0);

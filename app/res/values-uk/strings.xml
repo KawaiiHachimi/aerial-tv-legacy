@@ -51,9 +51,17 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Offline wallpapers and clock screensaver. Video, weather and phone setup are unavailable in this edition.</string>
+    <string name="compatibility_note">Bing, вбудовані шпалери, фото з телефона та годинник. Відео й погода поки недоступні.</string>
     <string name="hidden_hint">Виберіть застосунок, щоб повернути його на головний екран</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
     <string name="wallpaper_names">Hills, Dawn|Hills, Dusk|Hills, Mist|Hills, Night|Dunes, Gold|Dunes, Moonlight|Sea, Sunset|Sea, Clear Sky|Waves, Blue|Waves, Coral|Waves, Violet|Glow, Pink|Aurora|Glow, Lime|Aerial Dusk</string>
+    <string name="bing_daily">Bing: фото дня</string>
+    <string name="phone_photo">Фото з телефона</string>
+    <string name="phone_setup">Налаштувати з телефона</string>
+    <string name="phone_hint">Підключіть телефон до тієї ж мережі та скануйте код. Вибирайте шпалери, надсилайте фото та змінюйте налаштування. Після закриття вікна посилання втратить чинність.</string>
+    <string name="phone_unavailable">Підключіться до локальної мережі та повторіть спробу.</string>
+    <string name="bing_unavailable">Bing недоступний. Збережено попереднє фото або вбудовані шпалери.</string>
+    <string name="desktop_home">Головний екран</string>
+    <string name="names_none">Приховати всі</string>
 </resources>

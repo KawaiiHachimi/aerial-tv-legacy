@@ -397,7 +397,7 @@ final class HomeView extends View {
     Thread loader = new Thread(new Runnable() {
       @Override
       public void run() {
-        Bitmap wp = Gradients.render(selectedPreset, w, h);
+        Bitmap wp = ui.wallpapers.render(selectedPreset, w, h);
         bakeShade(wp);
         final Bitmap frost = Bitmap.createScaledBitmap(wp, 320, 180, true);
         int[] pixels = new int[320 * 180];
@@ -1017,7 +1017,7 @@ final class HomeView extends View {
               rect(cx - w / 2 - d(5), cy - h / 2 - d(5), cx + w / 2 + d(5), cy + h / 2 + d(5)),
               tileRadiusPx * k + d(5), tileRadiusPx * k + d(5), strokePaint);
         }
-        if (ui.names() || (weight > .5f && (i / COLS > 0 || !ui.plate()))) {
+        if (ui.showName(selected && !ui.chromeFocused)) {
           float baseline = cy + h / 2 + labelGapPx + labelSizePx * .92f;
           float tw = labelPaint.measureText(entry.displayLabel);
           labelPaint.setColor(selected ? 0xFFFFFFFF : 0xBBFFFFFF);
@@ -1064,7 +1064,7 @@ final class HomeView extends View {
     }
     iconPaint.setStyle(Paint.Style.FILL);
     iconPaint.setColor(ui.chromeFocused && ui.mode == DesktopUi.NONE ? 0xFF1D1D1F : 0xE6FFFFFF);
-    Glyphs.drawWifi(canvas, chromeWifiCx - chromeIconSizePx / 2f, chromeCy - chromeIconSizePx / 2f,
+    AerialGlyphs.draw(canvas, NetworkStatus.glyph(ui.networkKind), chromeWifiCx - chromeIconSizePx / 2f, chromeCy - chromeIconSizePx / 2f,
         chromeIconSizePx, iconPaint);
     solidPaint.setStyle(Paint.Style.FILL);
     solidPaint.setColor(ui.chromeFocused && ui.mode == DesktopUi.NONE ? 0xFF1D1D1F : 0xE6FFFFFF);

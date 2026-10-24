@@ -43,9 +43,21 @@ final class DesktopUi {
   final HomeView home;
   final DesktopLayout layout = new DesktopLayout();
   final SharedPreferences prefs;
+  final WallpaperStore wallpapers;
+  final PhoneSetup phone;
   final Map<String, HomeView.AppEntry> catalog = new LinkedHashMap<String, HomeView.AppEntry>();
   final Handler handler = new Handler(Looper.getMainLooper());
   int mode, index, column;
+  int networkKind;
+  private boolean networkRegistered;
+  private final android.content.BroadcastReceiver networkReceiver = new android.content.BroadcastReceiver() {
+    @Override public void onReceive(Context context, Intent intent) { refreshNetwork(); }
+  };
+  void refreshNetwork() {
+    networkKind = NetworkStatus.read(home.getContext());
+    home.invalidate();
+  }
+
   boolean chromeFocused, moving, closed, closing, active;
   String movingSnapshot, openFolder, moveKey;
   private HomeView.AppEntry menuEntry;
@@ -81,6 +93,10 @@ final class DesktopUi {
   DesktopUi(HomeView owner) {
     home = owner;
     prefs = home.getContext().getSharedPreferences("desktop-v3", Context.MODE_PRIVATE);
+    wallpapers = new WallpaperStore(home.getContext(), prefs, handler, new Runnable() {
+      @Override public void run() { if (!closed) home.changeWallpaper(); }
+    });
+    phone = new PhoneSetup(this);
     layout.decode(prefs.getString("layout", ""));
     text.setTypeface(AppFonts.regular(home.getContext()));
   }
@@ -90,9 +106,12 @@ final class DesktopUi {
   int preset() {
     return prefs.getInt("wallpaper", Gradients.DEFAULT_PRESET);
   }
-  boolean names() {
-    return prefs.getBoolean("names", false);
+  int nameMode() {
+    int value = prefs.getInt("name_mode", prefs.getBoolean("names", false) ? 0 : 1);
+    return Math.max(0, Math.min(2, value));
   }
+  boolean names() { return nameMode() == 0; }
+  boolean showName(boolean selected) { return nameMode() == 0 || (nameMode() == 1 && selected); }
   boolean contrast() {
     return prefs.getBoolean("contrast", true);
   }
@@ -108,16 +127,30 @@ final class DesktopUi {
   void onShown() {
     closed = false;
     active = true;
+    refreshNetwork();
+    if (wallpapers.source().equals("bing")) wallpapers.refresh(false);
+    if (!networkRegistered) {
+      home.getContext().registerReceiver(networkReceiver,
+          new android.content.IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+      networkRegistered = true;
+    }
     resetIdle();
   }
   void onHidden() {
     active = false;
+    phone.stop();
+    if (networkRegistered) {
+      home.getContext().unregisterReceiver(networkReceiver);
+      networkRegistered = false;
+    }
     handler.removeCallbacks(idle);
     armed = false;
     armedCode = -1;
   }
   void release() {
+    onHidden();
     closed = true;
+    wallpapers.close();
     handler.removeCallbacksAndMessages(null);
     if (panelAnimator != null)
       panelAnimator.cancel();
@@ -183,6 +216,7 @@ final class DesktopUi {
     if (panelAnimator != null)
       panelAnimator.cancel();
     mode = target;
+    if (target == CONTROL) refreshNetwork();
     index = at;
     closing = false;
     armed = false;
@@ -442,8 +476,8 @@ final class DesktopUi {
       return;
     }
     int count = mode == APP  ? appRows().length
-        : mode == PERSONAL   ? 10
-        : mode == WALLPAPERS ? Gradients.COUNT
+        : mode == PERSONAL   ? 11
+        : mode == WALLPAPERS ? Gradients.COUNT + 2
         : mode == HIDDEN     ? hidden().size()
         : mode == TO_FOLDER  ? folders().size() + 1
                              : folderCount();
@@ -463,6 +497,8 @@ final class DesktopUi {
       adjustPersonal(c == 22 ? 1 : -1);
       return;
     }
+    if (mode == WALLPAPERS && c == KeyEvent.KEYCODE_DPAD_DOWN && index / columns < (count - 1) / columns)
+      target = Math.min(target, count - 1);
     if (target >= 0 && target < count)
       index = target;
   }
@@ -511,8 +547,9 @@ final class DesktopUi {
       return;
     }
     if (mode == WALLPAPERS) {
-      prefs.edit().putInt("wallpaper", index).apply();
-      home.changeWallpaper();
+      if (index == Gradients.COUNT + 1) { phone.show(); return; }
+      wallpapers.select(index == Gradients.COUNT ? "bing" : "builtin",
+          index < Gradients.COUNT ? index : preset());
       open(PERSONAL, 0);
       return;
     }
@@ -634,7 +671,7 @@ final class DesktopUi {
         toggle("contrast", true);
         break;
       case 3:
-        toggle("names", false);
+        prefs.edit().putInt("name_mode", (nameMode() + 3 + direction) % 3).apply();
         break;
       case 4:
         toggle("plate", true);
@@ -659,6 +696,9 @@ final class DesktopUi {
         toggle("sounds", false);
         break;
       case 9:
+        phone.show();
+        return;
+      case 10:
         AppFonts.toast(home.getContext(), R.string.compatibility_note, Toast.LENGTH_LONG).show();
         break;
     }
@@ -676,18 +716,7 @@ final class DesktopUi {
       a.adjustStreamVolume(AudioManager.STREAM_MUSIC, delta > 0 ? 1 : -1, 0);
     home.invalidate();
   }
-  private String network() {
-    try {
-      ConnectivityManager c =
-          (ConnectivityManager) home.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-      NetworkInfo n = c == null ? null : c.getActiveNetworkInfo();
-      if (n != null && n.isConnected())
-        return n.getType() == ConnectivityManager.TYPE_WIFI ? s(R.string.network_wifi)
-                                                            : s(R.string.network_ethernet);
-    } catch (RuntimeException ignored) {
-    }
-    return s(R.string.network_offline);
-  }
+  private String network() { return s(NetworkStatus.label(networkKind)); }
   private void loadThumbs() {
     new Thread(new Runnable() {
       @Override
@@ -847,6 +876,7 @@ final class DesktopUi {
     c.drawRoundRect(new RectF(731, 228, 878, 234), 3, 3, paint);
     paint.setColor(index == 3 ? 0xFF1D1D1F : 0xFFFFFFFF);
     c.drawRoundRect(new RectF(731, 228, 731 + 147f * volume / Math.max(1, max), 234), 3, 3, paint);
+    if (index == 3) line(c, "‹  " + volume + " / " + max + "  ›", 731, 250, 10, 0xFFB8B8C0);
     row(c, s(R.string.cc_picture), 9, 590, 261, 316, index == 4, false, "›");
     row(c, s(R.string.cc_personalize), 10, 590, 313, 316, index == 5, false, "›");
     row(c, s(R.string.saver_preview), 11, 590, 365, 316, index == 6, false, null);
@@ -854,25 +884,26 @@ final class DesktopUi {
     c.drawCircle(605, 447, 3, paint);
     line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.3.1", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.4.0", 832, 452, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {
     return new String[] {s(R.string.pref_wallpaper), s(R.string.pref_clock), s(R.string.pref_focus),
         s(R.string.pref_names), s(R.string.pref_plate), s(R.string.pref_hidden),
         s(R.string.pref_idle), s(R.string.saver_preview), s(R.string.pref_sounds),
-        s(R.string.pref_about)};
+        s(R.string.phone_setup), s(R.string.pref_about)};
   }
   private String personalValue(int at) {
     switch (at) {
       case 0:
-        return s(R.string.wallpaper_names).split("\\|")[preset()];
+        return wallpapers.source().equals("builtin") ? s(R.string.wallpaper_names).split("\\|")[preset()]
+            : s(wallpapers.source().equals("bing") ? R.string.bing_daily : R.string.phone_photo);
       case 1:
         return s(largeClock() ? R.string.clock_large : R.string.clock_corner);
       case 2:
         return s(contrast() ? R.string.focus_contrast : R.string.focus_scale);
       case 3:
-        return s(names() ? R.string.names_all : R.string.names_selected);
+        return s(nameMode() == 0 ? R.string.names_all : nameMode() == 1 ? R.string.names_selected : R.string.names_none);
       case 4:
         return s(plate() ? R.string.option_on : R.string.option_off);
       case 5:
@@ -893,9 +924,10 @@ final class DesktopUi {
         0xFFFFFFFF);
     if (mode == WALLPAPERS) {
       String[] labels = s(R.string.wallpaper_names).split("\\|");
-      for (int i = 0; i < Gradients.COUNT; i++) {
-        float x = 40 + (i % 5) * 179, y = 239 + (i / 5) * 96;
-        if (thumbs[i] != null) {
+      int first = Math.max(0, index / 5 - 2) * 5;
+      for (int i = first; i < Math.min(first + 15, Gradients.COUNT + 2); i++) {
+        float x = 40 + (i % 5) * 179, y = 239 + ((i - first) / 5) * 96;
+        if (i < Gradients.COUNT && thumbs[i] != null) {
           c.save();
           Path path = new Path();
           path.addRoundRect(new RectF(x, y, x + 155, y + 70), 9, 9, Path.Direction.CW);
@@ -913,12 +945,17 @@ final class DesktopUi {
           c.drawRoundRect(new RectF(x - 4, y - 4, x + 159, y + 74), 12, 12, paint);
           paint.setStyle(Paint.Style.FILL);
         }
-        if (i == preset()) {
+        boolean selectedSource = i < Gradients.COUNT
+            ? wallpapers.source().equals("builtin") && i == preset()
+            : i == Gradients.COUNT && wallpapers.source().equals("bing");
+        if (selectedSource) {
           paint.setColor(0xFFF5F5F7);
           c.drawCircle(x + 141, y + 13, 8, paint);
           icon(c, 12, x + 136, y + 8, 10, 0xFF22222A);
         }
-        line(c, labels[i], x, y + 88, 12, 0xFFFFFFFF);
+        if (i >= Gradients.COUNT) icon(c, i == Gradients.COUNT ? 10 : 7, x+61, y+19, 32, 0xFFFFFFFF);
+        line(c, i < Gradients.COUNT ? labels[i] : s(i == Gradients.COUNT ? R.string.bing_daily : R.string.phone_setup),
+            x, y + 88, 12, 0xFFFFFFFF);
       }
     } else {
       String[] labels = personalLabels();
@@ -1016,7 +1053,7 @@ final class DesktopUi {
    */
   private void icon(Canvas c, int kind, float x, float y, float size, int color) {
     String[] paths = {AerialGlyphs.OPEN_WITH, AerialGlyphs.FOLDER, AerialGlyphs.VISIBILITY_OFF,
-        AerialGlyphs.INFO, AerialGlyphs.DELETE, AerialGlyphs.INPUT, AerialGlyphs.WIFI,
+        AerialGlyphs.INFO, AerialGlyphs.DELETE, AerialGlyphs.INPUT, NetworkStatus.glyph(networkKind),
         AerialGlyphs.SETTINGS, AerialGlyphs.VOLUME_UP, AerialGlyphs.LIGHT_MODE, AerialGlyphs.IMAGE,
         AerialGlyphs.PLAY_CIRCLE, AerialGlyphs.CHECK};
     paint.setColor(color);

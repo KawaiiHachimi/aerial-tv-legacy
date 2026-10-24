@@ -16,26 +16,46 @@
 | --- | --- |
 | ![应用菜单](docs/screenshots/menu.png) | ![控制中心](docs/screenshots/control-center.png?v=1.3.1) |
 
-以上为 Android 4.3 模拟器的原生 1920×1080 屏幕截图，不代表电视真机验证。截图保留了模拟器的应用列表。
+以上三张为 Android 4.3 模拟器的原生 1920×1080 屏幕截图，保留模拟器的应用列表。
+
+下面为 S40 Air 真机必应壁纸与“只显示选中的”应用名称，1920×1080 原始截图：
+
+![S40 Air 真机必应壁纸](docs/screenshots/bing-s40air.png)
+
+壁纸图片版权归原摄影者 / Bing 内容提供方；示例为应用运行截图，图片不会作为内置资源发布。
 
 ## 功能
 
 - 无广告、无推荐流，以已安装应用为中心。
 - 遥控器方向键导航、焦点缩放、按压反馈和边缘回弹；尽量减少卡片与文字阴影。
 - 应用移动、文件夹、隐藏与恢复、应用信息，以及交由系统确认的卸载。
-- 可操作的控制中心：网络和系统设置入口、音量调节、个性化、屏保。
-- 15 款离线绘制的壁纸；时钟、名称显示、玻璃底板和焦点样式设置。
+- 控制中心：网络和系统设置入口、音量、个性化、屏保；有线网络 / Wi-Fi / 离线状态图标。
+- 15 款内置壁纸、必应每日壁纸、手机扫码上传照片；断网保留已缓存图片。
+- 应用名称三档：全部显示、仅选中、全部隐藏；修复第一排开启玻璃底板时选中名称不显示。
+- 手机配置：局域网二维码网页，可预览 / 选择内置壁纸、选择必应、传图、设置名称 / 时钟 / 焦点 / 屏保。
 - 可配置空闲时间的时钟屏保；唤醒按键不会误启动应用。
 - 内置 Google Sans Regular / Medium 静态字体；缺少的汉字使用系统中文字体回退。
 - 布局和偏好保存在本地；后台不运行持续动画。
 
 ## 兼容与边界
 
-本项目主要面向 Android 4.3 老电视，最低 API 18，不依赖 AndroidX、Compose 或 native 库。发布包保持 DEX 035 和 APK v1 签名。
+本项目主要面向 Android 4.3 老电视，最低 API 18，不依赖 AndroidX 或 Compose。必应 HTTPS 使用 API18 兼容的 Conscrypt 2.5.3，包含 ARMv7 / x86 native 库。发布包保持 DEX 035 和 APK v1 签名。
 
-目前运行验证来自 Android 4.3 x86 模拟器。真实电视、遥控器、MStar GPU、厂商输入源及背光控制需要逐机验证。画面/亮度入口交给系统设置；LeTV 旧版信号源优先使用其显式 Activity 入口。
+已在 Android 4.3 x86 模拟器验证基础交互，并在 LeTV S40 Air 真机安装测试壁纸：必应 HTTPS 实际下载、照片裁切与无效图片保护、手机接口和三档名称绘制均通过。信号源的空桌面列表崩溃已定位并补齐 EUI 初始化；用户确认可用“上 → 右”返回桌面。物理 HDMI 输入画质、背光和其它机型仍需分别验证。
 
-尚未移植原版的航拍视频、在线天气、手机配置/上传、自动升级及家长密码。此仓库不包含电视固件、厂商 APK、设备密钥或用户数据。
+画面 / 亮度入口交给系统设置。部分 EUI 固件只允许 UID1000 调整主音量，普通桌面身份的音量请求会被拒绝；此版本保留显示和标准接口，尚未解决该机型的音量权限限制。
+
+尚未移植原版的航拍视频、在线天气、自动升级及家长密码。此仓库不包含电视固件、厂商 APK、设备密钥或用户数据。
+
+## 壁纸与手机配置
+
+在「个性化 → 壁纸」选择必应每日，或在「个性化 → 手机配置」打开二维码。手机和电视连接同一局域网，用手机浏览器扫码。无需外部服务器、账号或云端照片存储。
+
+- 支持 JPEG / PNG / WebP，上传上限 8 MB；解码后限制尺寸，按屏幕比例居中裁切。电视保存最新一张手机照片，上传成功立即应用。
+- 必应每天在回到桌面时检查更新；网络失败保留上次图片，没有缓存时使用内置壁纸。可在手机页面手动刷新，并查看图片版权说明。
+- 配置页面展示 15 款内置壁纸预览；链接带随机令牌，仅接受局域网请求。退出桌面即关闭服务，二维码窗口关闭后最多保留 5 分钟；窗口持续打开最多 15 分钟。
+- Bing 使用 HTTPS、Conscrypt 和随 APK 提供的官方公共 CA 根证书；仅用于 Bing 连接，保留证书与域名校验，不修改系统信任库。证书来源与指纹见 `app/assets/bing-ca/README.txt`。
+- 目前是每日一张必应图片和最新一张手机照片；原版的历史图库、多照片轮播与视频壁纸尚未完整移植。
 
 ## 安装
 
@@ -92,11 +112,13 @@ adb shell am instrument -w -e class app.aerial.legacy.UiJourneyTest \
   app.aerial.legacy.tests/android.test.InstrumentationTestRunner
 ```
 
-布局测试覆盖排序、取消移动、文件夹、隐藏恢复、Unicode 名称和卸载清理。原生测试覆盖字体、中文回退、动画收敛、按键操作、持久化和可选 LeTV 桥接接口。测试不是硬件信号切换或真机刷机的替代品。
+布局测试覆盖排序、取消移动、文件夹、隐藏恢复、Unicode 名称和卸载清理。原生测试覆盖字体、中文回退、动画收敛、按键操作、持久化和可选 LeTV 桥接接口。`DeviceFeaturesTest` 需要联网的 API18 测试机，验证真实必应下载、照片缓存、手机 HTTP 权限与配置、名称显示的实际 Canvas 像素差异。测试会恢复已有偏好和照片。测试不是硬件信号切换或真机刷机的替代品。
+
+旧版 EUI 命令兼容：若 `am` 报跨用户错误，使用 `am start --user 0 ...`。某些固件的 `pm install` 只能由设备已有的 `su 0 pm install -r /data/local/tmp/文件.apk` 执行。这里不修改 su 策略。电脑侧旧 ADB 服务若报 `No route to host` 而 TCP 可连，可使用独立端口运行 `adb -P 5038 start-server` 再连接，避免干扰已有服务。
 
 ## 可选 LeTV 桥接
 
-`extras/t2launcher/` 仅供旧 LeTV 固件集成：保留 `com.stv.launcher` 的启动入口、普通启动查询和 `ShowTitleService` Messenger 绑定契约，不注册 HOME。Aerial 会在自己的应用列表中隐藏这个兼容包。
+`extras/t2launcher/` 仅供旧 LeTV 固件集成：保留 `com.stv.launcher` 的启动入口、普通启动查询和 `ShowTitleService` Messenger 绑定契约，以低于 Aerial 的优先级接收厂商指定包名的 HOME / 桌面切换请求。Aerial 会在自己的应用列表中隐藏这个兼容包。
 
 它不实现厂商标题栏、不模拟电视硬件，也不保证修复所有信号源故障。普通电视或盒子不需要安装。此仓库的默认构建仅生成桌面 APK；`--with-bridge` 才额外生成桥接包。
 
@@ -104,6 +126,8 @@ adb shell am instrument -w -e class app.aerial.legacy.UiJourneyTest \
 
 - **Aerial / pengchujin**：产品理念、界面设计、壁纸算法、图标与交互参考。[原项目](https://github.com/pengchujin/aerial-tv)，MIT。
 - **Google Sans**：官方 Android 静态字体，SIL Open Font License 1.1；授权随字体内置。[字体项目](https://github.com/googlefonts/googlesans)。
+- **Nayuki QR Code generator**：手机配置二维码，MIT；源码保留许可头，API18 适配说明见 `LICENSE-QR-Code-generator.txt`。
+- **Conscrypt / Android Open Source Project**：兼容旧版 Android 的 HTTPS，Apache-2.0；固定依赖、校验和及许可见 `third_party/conscrypt/`。
 - **Material Symbols Rounded**：部分矢量路径，Apache License 2.0。[图标项目](https://github.com/google/material-design-icons)。
 
 兼容实现采用 MIT，保留上游版权和第三方许可，详见 [LICENSE](LICENSE)、[NOTICE](NOTICE)、各 `LICENSE-*.txt`。

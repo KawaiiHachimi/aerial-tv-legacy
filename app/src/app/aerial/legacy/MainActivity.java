@@ -9,8 +9,8 @@ import android.view.WindowManager;
 /**
  * The single Activity of the Aerial desktop for Android 4.3.
  *
- * <p>Declared as the only high-priority HOME in the firmware (the bridge APK keeps only
- * {@code com.stv.launcher.action.start}). Keys are dispatched here instead of relying on focusable
+ * <p>The high-priority HOME; the optional bridge handles lower-priority package-scoped vendor
+ * HOME requests. Keys are dispatched here instead of relying on focusable
  * child views, which is far more reliable with MStar IR remotes.
  */
 public final class MainActivity extends Activity {
@@ -22,6 +22,7 @@ public final class MainActivity extends Activity {
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
         | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     hideSystemUi();
+    LegacyDesktop.initialize(this, true);
     home = new HomeView(this);
     setContentView(home);
   }
@@ -29,6 +30,7 @@ public final class MainActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    LegacyDesktop.initialize(this, true);
     hideSystemUi();
     if (home != null) {
       home.onShown();

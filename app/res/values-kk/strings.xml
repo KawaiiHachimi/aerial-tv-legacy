@@ -51,9 +51,17 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Offline wallpapers and clock screensaver. Video, weather and phone setup are unavailable in this edition.</string>
+    <string name="compatibility_note">Bing, кірістірілген тұсқағаздар, телефон фотосы және сағат. Бейне мен ауа райы әзірге жоқ.</string>
     <string name="hidden_hint">Қолданбаны басты экранға қайтару үшін таңдаңыз</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
     <string name="wallpaper_names">Hills, Dawn|Hills, Dusk|Hills, Mist|Hills, Night|Dunes, Gold|Dunes, Moonlight|Sea, Sunset|Sea, Clear Sky|Waves, Blue|Waves, Coral|Waves, Violet|Glow, Pink|Aurora|Glow, Lime|Aerial Dusk</string>
+    <string name="bing_daily">Bing күнделікті тұсқағазы</string>
+    <string name="phone_photo">Телефон фотосы</string>
+    <string name="phone_setup">Телефоннан баптау</string>
+    <string name="phone_hint">Телефонды бір желіге қосып, кодты сканерлеңіз. Тұсқағазды таңдауға, фото жүктеуге және баптауға болады. Терезе жабылған соң сілтеме өшеді.</string>
+    <string name="phone_unavailable">Жергілікті желіге қосылып, қайталаңыз.</string>
+    <string name="bing_unavailable">Bing қолжетімсіз. Алдыңғы фото немесе кірістірілген тұсқағаз сақталды.</string>
+    <string name="desktop_home">Басты экран</string>
+    <string name="names_none">Барлығын жасыру</string>
 </resources>

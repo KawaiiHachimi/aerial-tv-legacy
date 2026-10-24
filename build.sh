@@ -49,9 +49,16 @@ build_app() {
     -I "$PLATFORM" -F "$work/base.apk" -J "$work/gen" --min-sdk-version 18 --target-sdk-version 18
   find "$source/src" "$work/gen" -name '*.java' -print > "$work/sources.txt"
   javac -source 8 -target 8 -encoding UTF-8 -bootclasspath "$PLATFORM" \
-    -d "$work/classes" @"$work/sources.txt"
+    -classpath "$ROOT/third_party/conscrypt/classes.jar" -d "$work/classes" @"$work/sources.txt"
   find "$work/classes" -name '*.class' -print > "$work/classes.txt"
-  "$BT/d8" --release --min-api 18 --lib "$PLATFORM" --output "$work/dex" @"$work/classes.txt"
+  if [ "$name" = aerial ]; then
+    "$BT/d8" --release --min-api 18 --lib "$PLATFORM" --output "$work/dex" @"$work/classes.txt" "$ROOT/third_party/conscrypt/classes.jar"
+    mkdir -p "$work/native/lib"
+    cp -R "$ROOT/third_party/conscrypt/jni/"* "$work/native/lib/"
+    (cd "$work/native" && zip -q -r -X "$work/base.apk" lib)
+  else
+    "$BT/d8" --release --min-api 18 --lib "$PLATFORM" --output "$work/dex" @"$work/classes.txt"
+  fi
   (cd "$work/dex" && zip -q -X "$work/base.apk" classes.dex)
   "$BT/zipalign" -f -p 4 "$work/base.apk" "$work/aligned.apk"
   "$BT/apksigner" sign --ks "$KEY" --ks-key-alias "$ALIAS" \

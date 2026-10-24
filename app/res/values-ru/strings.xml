@@ -51,9 +51,17 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Offline wallpapers and clock screensaver. Video, weather and phone setup are unavailable in this edition.</string>
+    <string name="compatibility_note">Bing, встроенные обои, фото с телефона и часы. Видео и погода пока недоступны.</string>
     <string name="hidden_hint">Выберите приложение, чтобы вернуть его на главный экран</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
     <string name="wallpaper_names">Hills, Dawn|Hills, Dusk|Hills, Mist|Hills, Night|Dunes, Gold|Dunes, Moonlight|Sea, Sunset|Sea, Clear Sky|Waves, Blue|Waves, Coral|Waves, Violet|Glow, Pink|Aurora|Glow, Lime|Aerial Dusk</string>
+    <string name="bing_daily">Bing: фото дня</string>
+    <string name="phone_photo">Фото с телефона</string>
+    <string name="phone_setup">Настроить с телефона</string>
+    <string name="phone_hint">Подключите телефон к той же сети и отсканируйте код. Выбирайте обои, загружайте фото и меняйте настройки. После закрытия окна ссылка истечёт.</string>
+    <string name="phone_unavailable">Подключитесь к локальной сети и повторите попытку.</string>
+    <string name="bing_unavailable">Bing недоступен. Сохранены прошлое фото или встроенные обои.</string>
+    <string name="desktop_home">Главный экран</string>
+    <string name="names_none">Скрыть все</string>
 </resources>

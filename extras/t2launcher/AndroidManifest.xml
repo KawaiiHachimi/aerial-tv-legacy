@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Replacement for the firmware's T2launcher.apk, same package name so the vendor start action and
-  any stored shortcut keep working. It must not declare HOME. A LAUNCHER entry is retained for vendor package lookups;
+  any stored shortcut keep working. It accepts package-scoped HOME requests at a lower priority than Aerial. A LAUNCHER entry is retained for vendor package lookups;
   Aerial excludes this compatibility package from its own grid.
   Theme.NoDisplay: the activity only forwards and finishes, it must never flash a window.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.stv.launcher"
-    android:versionCode="3"
-    android:versionName="3.0-aerial18">
+    android:versionCode="4"
+    android:versionName="4.0-aerial18">
 
     <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18" />
 
@@ -34,6 +34,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- EUI sends package-scoped HOME intents, including signal desktop requests. -->
+            <intent-filter android:priority="-1000">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <!-- The vendor action the firmware/shortcuts may still send. -->

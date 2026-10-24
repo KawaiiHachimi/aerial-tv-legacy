@@ -51,9 +51,17 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Offline wallpapers and clock screensaver. Video, weather and phone setup are unavailable in this edition.</string>
+    <string name="compatibility_note">Bing daily, offline wallpapers, phone photos and clock screensaver. Aerial videos and weather are not available in this edition.</string>
     <string name="hidden_hint">Select an app to put it back on Home</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
     <string name="wallpaper_names">Hills, Dawn|Hills, Dusk|Hills, Mist|Hills, Night|Dunes, Gold|Dunes, Moonlight|Sea, Sunset|Sea, Clear Sky|Waves, Blue|Waves, Coral|Waves, Violet|Glow, Pink|Aurora|Glow, Lime|Aerial Dusk</string>
+    <string name="bing_daily">Bing Daily</string>
+    <string name="phone_photo">Phone photo</string>
+    <string name="phone_setup">Phone setup</string>
+    <string name="phone_hint">Connect your phone to the same network, then scan the code. Choose a wallpaper, upload a photo or adjust Home. The link expires after this window closes.</string>
+    <string name="phone_unavailable">Connect to your local network and try again.</string>
+    <string name="bing_unavailable">Bing is temporarily unavailable. The last image or built-in wallpaper is kept.</string>
+    <string name="desktop_home">Home</string>
+    <string name="names_none">Hide all</string>
 </resources>
