@@ -1,0 +1,5 @@
+Host tests only; not packaged in the APK. Android uses its built-in org.json.
+
+JSON-java 20240303, source https://github.com/stleary/JSON-java/tree/20240303 .
+Artifact https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar
+SHA-256 `3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed`.

@@ -45,19 +45,33 @@
 - 15 款内置壁纸、必应每日壁纸、手机扫码上传照片；断网保留已缓存图片。
 - 应用名称三档：全部显示、仅选中、全部隐藏；修复第一排开启玻璃底板时选中名称不显示。
 - 手机配置：局域网二维码网页，可预览 / 选择内置壁纸、选择必应、传图、设置名称 / 时钟 / 焦点 / 屏保。
+- 天气：手机选择城市，首页显示天气图标、当前气温和今日高低温；支持中文城市、离线短期缓存和大小时钟布局。
 - 可配置空闲时间的时钟屏保；唤醒按键不会误启动应用。
 - 内置 Google Sans Regular / Medium 静态字体；缺少的汉字使用系统中文字体回退。
 - 布局和偏好保存在本地；后台不运行持续动画。
 
 ## 兼容与边界
 
-本项目主要面向 Android 4.3 老电视，最低 API 18，不依赖 AndroidX 或 Compose。必应 HTTPS 使用 API18 兼容的 Conscrypt 2.5.3，包含 ARMv7 / x86 native 库。发布包保持 DEX 035 和 APK v1 签名。
+本项目主要面向 Android 4.3 老电视，最低 API 18，不依赖 AndroidX 或 Compose。必应与天气 HTTPS 使用 API18 兼容的 Conscrypt 2.5.3，包含 ARMv7 / x86 native 库。发布包保持 DEX 035 和 APK v1 签名。
 
 已在 Android 4.3 x86 模拟器验证基础交互，并在 LeTV S40 Air 真机安装测试壁纸：必应 HTTPS 实际下载、照片裁切与无效图片保护、手机接口和三档名称绘制均通过。信号源的空桌面列表崩溃已定位并补齐 EUI 初始化；用户确认可用“上 → 右”返回桌面。物理 HDMI 输入画质、背光和其它机型仍需分别验证。
 
 画面 / 亮度入口交给系统设置。部分 EUI 固件只允许 UID1000 调整主音量，普通桌面身份的音量请求会被拒绝；此版本保留显示和标准接口，尚未解决该机型的音量权限限制。
 
-尚未移植原版的航拍视频、在线天气、自动升级及家长密码。此仓库不包含电视固件、厂商 APK、设备密钥或用户数据。
+尚未移植原版的航拍视频、自动升级及家长密码。此仓库不包含电视固件、厂商 APK、设备密钥或用户数据。
+
+## 天气
+
+在「个性化 → 天气」打开手机配置，扫码后点顶部的「天气」。搜索城市并选择结果，即可在首页显示天气；也可关闭显示。天气默认关闭，不根据 IP 猜测位置，不请求定位权限。中国城市使用原版 Aerial 的 GeoNames 城市表，海外城市与拼音搜索使用 Open-Meteo 地理编码。
+
+- 数据来自 [Open-Meteo](https://open-meteo.com/)，显示当前气温、晴雨图标和今日最高 / 最低温。日夜图标由天气数据决定。
+- 桌面可见时每小时检查更新；失败后间隔至少 10 分钟重试，可在手机页面手动刷新。复用现有时钟回调，不增加后台常驻服务。
+- 断网保留最近 3 小时的数据，并标记缓存；过期或系统时间回拨后隐藏读数，避免把旧天气当成当前天气。切换城市会清除旧城市读数。
+- 天气 HTTPS 与必应共享兼容客户端，公共 CA 根证书按域名隔离，保留证书和域名校验。天气根证书来源与指纹见 `app/assets/weather-ca/README.txt`。
+
+![天气与大时钟](docs/screenshots/weather-large.png)
+
+上图为本机 Android 4.3 模拟器的原生 Canvas 渲染，杭州仅为明确选择的测试城市；不代表电视位置。天气联网、手机配置和两种时钟布局已在模拟器验证，尚未安装本版到 S40 Air 真机。
 
 ## 壁纸与手机配置
 
@@ -109,8 +123,11 @@ export JAVA_HOME=/path/to/jdk
 ## 测试
 
 ```bash
-# 无需 Android 设备的布局模型测试
+# 无需 Android 设备的布局、天气解析、缓存与生命周期测试
 ./tests/run.sh
+
+# 可选：联网验证天气 / 必应证书与接口（宿主机 TLS）
+./tests/run.sh --live
 
 # 构建厂商兼容桥和原生测试 APK
 ./build.sh --with-bridge
@@ -124,7 +141,9 @@ adb shell am instrument -w -e class app.aerial.legacy.UiJourneyTest \
   app.aerial.legacy.tests/android.test.InstrumentationTestRunner
 ```
 
-布局测试覆盖排序、取消移动、文件夹、隐藏恢复、Unicode 名称和卸载清理。原生测试覆盖字体、中文回退、动画收敛、按键操作、持久化和可选 LeTV 桥接接口。`DeviceFeaturesTest` 需要联网的 API18 测试机，验证真实必应下载、照片缓存、手机 HTTP 权限与配置、名称显示的实际 Canvas 像素差异。测试会恢复已有偏好和照片。测试不是硬件信号切换或真机刷机的替代品。
+布局测试覆盖排序、取消移动、文件夹、隐藏恢复、Unicode 名称和卸载清理；天气测试覆盖 WMO 解析、城市搜索、过期缓存、网络失败、切换城市竞态与隐藏时取消刷新。宿主机测试依赖及校验和见 `tests/lib/`，不打包进 APK。
+
+原生测试覆盖字体、中文回退、动画收敛、按键操作、持久化和可选 LeTV 桥接接口。`DeviceFeaturesTest` 需要联网的 API18 测试机，验证真实必应下载、照片缓存、手机 HTTP 权限与配置、名称显示的实际 Canvas 像素差异；它会恢复已有偏好和照片。`WeatherFeatureTest` 在独立测试设备上运行，验证原生 Conscrypt HTTPS、手机选择测试城市、开关天气和两种时钟渲染，会留下测试城市设置及预览图片。通过上面的 instrumentation 命令替换类名即可运行。测试不是硬件信号切换或真机刷机的替代品。
 
 旧版 EUI 命令兼容：若 `am` 报跨用户错误，使用 `am start --user 0 ...`。某些固件的 `pm install` 只能由设备已有的 `su 0 pm install -r /data/local/tmp/文件.apk` 执行。这里不修改 su 策略。电脑侧旧 ADB 服务若报 `No route to host` 而 TCP 可连，可使用独立端口运行 `adb -P 5038 start-server` 再连接，避免干扰已有服务。
 
@@ -141,5 +160,6 @@ adb shell am instrument -w -e class app.aerial.legacy.UiJourneyTest \
 - **Nayuki QR Code generator**：手机配置二维码，MIT；源码保留许可头，API18 适配说明见 `LICENSE-QR-Code-generator.txt`。
 - **Conscrypt / Android Open Source Project**：兼容旧版 Android 的 HTTPS，Apache-2.0；固定依赖、校验和及许可见 `third_party/conscrypt/`。
 - **Material Symbols Rounded**：部分矢量路径，Apache License 2.0。[图标项目](https://github.com/google/material-design-icons)。
+- **Open-Meteo / GeoNames**：天气数据、地理编码与中国城市表，CC BY 4.0；来源与署名见 `LICENSE-Weather-Data.txt`。
 
 兼容实现采用 MIT，保留上游版权和第三方许可，详见 [LICENSE](LICENSE)、[NOTICE](NOTICE)、各 `LICENSE-*.txt`。

@@ -26,3 +26,11 @@ Conscrypt Android 2.5.3, Android Open Source Project, Apache-2.0:
   https://github.com/google/conscrypt/tree/2.5.3
   Unmodified Maven classes and ARMv7 / x86 native libraries; SHA-256 provenance in third_party/conscrypt/.
   License/NOTICE and Apache Harmony/Netty notices are also bundled in the APK assets/licenses/.
+
+Weather and geocoding: Open-Meteo, https://open-meteo.com/, CC BY 4.0.
+Chinese city table: GeoNames, https://www.geonames.org/, CC BY 4.0,
+  copied unchanged from the reference Aerial revision above.
+  Attribution and source links: LICENSE-Weather-Data.txt (also bundled in the APK).
+
+JSON-java 20240303, public domain, https://github.com/stleary/JSON-java/tree/20240303.
+  Host tests only; not packaged in the APK. Provenance and checksum in tests/lib/.

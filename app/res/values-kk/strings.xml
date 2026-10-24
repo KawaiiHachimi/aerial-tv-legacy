@@ -51,7 +51,7 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Bing, кірістірілген тұсқағаздар, телефон фотосы және сағат. Бейне мен ауа райы әзірге жоқ.</string>
+    <string name="compatibility_note">Bing тұсқағаздары, телефон фотосы, ауа райы және сағат. Бейне әзірге жоқ.</string>
     <string name="hidden_hint">Қолданбаны басты экранға қайтару үшін таңдаңыз</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
@@ -64,4 +64,16 @@
     <string name="bing_unavailable">Bing қолжетімсіз. Алдыңғы фото немесе кірістірілген тұсқағаз сақталды.</string>
     <string name="desktop_home">Басты экран</string>
     <string name="names_none">Барлығын жасыру</string>
+    <string name="weather_settings">Ауа райы</string>
+    <string name="weather_choose_city">Телефонда қаланы таңдау</string>
+    <string name="weather_clear">Ашық</string>
+    <string name="weather_partly_cloudy">Аз бұлтты</string>
+    <string name="weather_cloudy">Бұлтты</string>
+    <string name="weather_fog">Тұман</string>
+    <string name="weather_rain">Жаңбыр</string>
+    <string name="weather_snow">Қар</string>
+    <string name="weather_thunder">Найзағай</string>
+    <string name="weather_unknown">Ауа райы</string>
+    <string name="weather_range">Ең жоғары %1$d° · Ең төмен %2$d°</string>
+    <string name="weather_cached">кэш</string>
 </resources>

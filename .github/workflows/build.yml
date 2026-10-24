@@ -21,7 +21,7 @@ jobs:
         run: |
           printf 'y\ny\ny\ny\ny\ny\ny\ny\ny\ny\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-18" "build-tools;36.0.0"
-      - name: Test layout model
+      - name: Test layout and weather
         run: ./tests/run.sh
       - name: Build development APKs
         run: ./build.sh --with-bridge

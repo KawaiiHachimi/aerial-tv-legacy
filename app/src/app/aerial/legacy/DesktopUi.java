@@ -44,6 +44,7 @@ final class DesktopUi {
   final DesktopLayout layout = new DesktopLayout();
   final SharedPreferences prefs;
   final WallpaperStore wallpapers;
+  final WeatherStore weather;
   final PhoneSetup phone;
   final Map<String, HomeView.AppEntry> catalog = new LinkedHashMap<String, HomeView.AppEntry>();
   final Handler handler = new Handler(Looper.getMainLooper());
@@ -94,6 +95,13 @@ final class DesktopUi {
   DesktopUi(HomeView owner) {
     home = owner;
     prefs = home.getContext().getSharedPreferences("desktop-v3", Context.MODE_PRIVATE);
+    WeatherApi.Assets assets = new WeatherApi.Assets() {
+      public java.io.InputStream open(String path) throws java.io.IOException { return home.getContext().getAssets().open(path); }
+    };
+    LegacyHttp http = new LegacyHttp(assets);
+    weather = new WeatherStore(home.getContext(), handler, new Runnable() {
+      public void run() { if (!closed) home.invalidate(); }
+    }, new WeatherApi(http, assets));
     wallpapers = new WallpaperStore(home.getContext(), prefs, handler, new Runnable() {
       @Override public void run() {
         if (!closed) {
@@ -101,7 +109,7 @@ final class DesktopUi {
           if (mode == WALLPAPERS) loadThumbs();
         }
       }
-    });
+    }, http);
     phone = new PhoneSetup(this);
     layout.decode(prefs.getString("layout", ""));
     text.setTypeface(AppFonts.regular(home.getContext()));
@@ -133,6 +141,7 @@ final class DesktopUi {
   void onShown() {
     closed = false;
     active = true;
+    weather.onShown();
     refreshNetwork();
     if (wallpapers.source().equals("bing")) wallpapers.refresh(false);
     if (!networkRegistered) {
@@ -144,6 +153,7 @@ final class DesktopUi {
   }
   void onHidden() {
     active = false;
+    weather.onHidden();
     phone.stop();
     if (networkRegistered) {
       home.getContext().unregisterReceiver(networkReceiver);
@@ -157,6 +167,7 @@ final class DesktopUi {
     onHidden();
     closed = true;
     wallpapers.close();
+    weather.close();
     handler.removeCallbacksAndMessages(null);
     if (panelAnimator != null)
       panelAnimator.cancel();
@@ -482,7 +493,7 @@ final class DesktopUi {
       return;
     }
     int count = mode == APP  ? appRows().length
-        : mode == PERSONAL   ? 11
+        : mode == PERSONAL   ? 12
         : mode == WALLPAPERS ? Gradients.COUNT + 2
         : mode == HIDDEN     ? hidden().size()
         : mode == TO_FOLDER  ? folders().size() + 1
@@ -707,6 +718,9 @@ final class DesktopUi {
       case 10:
         AppFonts.toast(home.getContext(), R.string.compatibility_note, Toast.LENGTH_LONG).show();
         break;
+      case 11:
+        phone.show();
+        return;
     }
     home.invalidate();
   }
@@ -901,17 +915,20 @@ final class DesktopUi {
     c.drawCircle(605, 447, 3, paint);
     line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.4.1", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.5.0", 832, 452, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {
     return new String[] {s(R.string.pref_wallpaper), s(R.string.pref_clock), s(R.string.pref_focus),
         s(R.string.pref_names), s(R.string.pref_plate), s(R.string.pref_hidden),
         s(R.string.pref_idle), s(R.string.saver_preview), s(R.string.pref_sounds),
-        s(R.string.phone_setup), s(R.string.pref_about)};
+        s(R.string.phone_setup), s(R.string.pref_about), s(R.string.weather_settings)};
   }
   private String personalValue(int at) {
     switch (at) {
+      case 11:
+        WeatherData.Place city = weather.place();
+        return city == null ? s(R.string.weather_choose_city) : city.name;
       case 0:
         return wallpapers.source().equals("builtin") ? s(R.string.wallpaper_names).split("\\|")[preset()]
             : s(wallpapers.source().equals("bing") ? R.string.bing_daily : R.string.phone_photo);

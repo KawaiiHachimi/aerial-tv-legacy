@@ -51,7 +51,7 @@
     <string name="remote_hint">Make it yours</string>
     <string name="personal_hint">Up / Down: choose a setting|Left / Right or OK: change|Back: return to Control Center</string>
     <string name="compatibility_short">Aerial · Android 4.3 edition</string>
-    <string name="compatibility_note">Bing, вбудовані шпалери, фото з телефона та годинник. Відео й погода поки недоступні.</string>
+    <string name="compatibility_note">Шпалери Bing, фото з телефона, погода й годинник. Відео поки недоступне.</string>
     <string name="hidden_hint">Виберіть застосунок, щоб повернути його на головний екран</string>
     <string name="folder_hint">OK to open · Menu to organize</string>
     <string name="empty_collection">Nothing here yet</string>
@@ -64,4 +64,16 @@
     <string name="bing_unavailable">Bing недоступний. Збережено попереднє фото або вбудовані шпалери.</string>
     <string name="desktop_home">Головний екран</string>
     <string name="names_none">Приховати всі</string>
+    <string name="weather_settings">Погода</string>
+    <string name="weather_choose_city">Вибрати місто на телефоні</string>
+    <string name="weather_clear">Ясно</string>
+    <string name="weather_partly_cloudy">Мінлива хмарність</string>
+    <string name="weather_cloudy">Хмарно</string>
+    <string name="weather_fog">Туман</string>
+    <string name="weather_rain">Дощ</string>
+    <string name="weather_snow">Сніг</string>
+    <string name="weather_thunder">Гроза</string>
+    <string name="weather_unknown">Погода</string>
+    <string name="weather_range">Макс. %1$d° · Мін. %2$d°</string>
+    <string name="weather_cached">кеш</string>
 </resources>

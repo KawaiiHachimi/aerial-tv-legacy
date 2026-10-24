@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0-legacy18 — 2026-10-24
+
+- Port Open-Meteo weather: manual city selection, current temperature, day/night glyphs and daily high/low in both Home clock layouts.
+- Reuse Aerial's GeoNames Chinese city catalog, with online geocoding for other queries; add weather controls to the token-protected phone page.
+- Refresh hourly while Home is visible, back off after failures and retain clearly marked cached readings for up to three hours. Discard late responses after a city change.
+- Share the API18 HTTPS client with Bing, retaining host-scoped CA roots and certificate/hostname verification; add ISRG X1/X2 roots for weather.
+- Keep original Aerial solid system-card colors. Add host tests for parsing/cache/lifecycle races and a native API18 HTTPS/phone/Canvas integration test.
+
 ## 1.4.1-legacy18 — 2026-10-24
 
 - Use one generic app-card pipeline: prefer a valid TV banner, otherwise keep the original app icon with consistent sizing and a sampled-color background. No third-party package-specific recipes.

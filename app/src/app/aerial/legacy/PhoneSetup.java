@@ -127,7 +127,20 @@ final class PhoneSetup {
       if(!post && path.equals("/api/state")) { reply(socket,200,"application/json; charset=utf-8",state().toString().getBytes("UTF-8"));return; }
       if(!post || !path.startsWith("/api/")) {reply(socket,404,"text/plain",new byte[0]);return;}
       final JSONObject values=path.equals("/api/upload")?new JSONObject():new JSONObject(new String(body,"UTF-8"));
-      if(path.equals("/api/upload")) ui.wallpapers.upload(body);
+      if (path.equals("/api/weather/search")) {
+        try {
+          org.json.JSONArray cities = new org.json.JSONArray();
+          for (WeatherData.Place city : ui.weather.search(values.getString("name"))) cities.put(WeatherStore.cityJson(city));
+          reply(socket, 200, "application/json; charset=utf-8", new JSONObject().put("cities", cities).toString().getBytes("UTF-8"));
+        } catch (Exception unavailable) {
+          reply(socket, 502, "application/json; charset=utf-8", new JSONObject()
+              .put("message", "暂时无法查找城市，请检查网络后重试 / City search unavailable").toString().getBytes("UTF-8"));
+        }
+        return;
+      }
+      if (path.equals("/api/weather")) ui.weather.configure(values);
+      else if (path.equals("/api/weather/refresh")) ui.weather.refresh(true);
+      else if(path.equals("/api/upload")) ui.wallpapers.upload(body);
       else if(path.equals("/api/refresh")) ui.wallpapers.refresh(true);
       else if(path.equals("/api/wallpaper")) ui.wallpapers.select(values.getString("source"),values.optInt("preset",ui.preset()));
       else if(path.equals("/api/settings")) {
@@ -147,7 +160,7 @@ final class PhoneSetup {
       } else {reply(socket,404,"text/plain",new byte[0]);return;}
       reply(socket,200,"application/json; charset=utf-8",state().toString().getBytes("UTF-8"));
     } catch(Exception invalid) {
-      try { reply(socket,400,"text/plain; charset=utf-8","Unable to apply request; check the image or reconnect from the TV.".getBytes("UTF-8")); } catch(IOException ignored) { }
+      try { reply(socket,400,"text/plain; charset=utf-8","无法应用设置，请检查输入或在电视重新打开手机配置 / Check the input or reopen setup on TV.".getBytes("UTF-8")); } catch(IOException ignored) { }
     } finally { try { socket.close(); } catch(IOException ignored) { } }
   }
   private JSONObject state() throws Exception {
@@ -157,7 +170,7 @@ final class PhoneSetup {
         .put("busy",ui.wallpapers.fetching()).put("status",ui.wallpapers.status());
     for(String key:new String[]{"names","contrast","plate","large_clock","sounds"})
       state.put(key,ui.prefs.getBoolean(key,key.equals("contrast")||key.equals("plate")));
-    state.put("idle",ui.prefs.getInt("idle",2)).put("name_mode",ui.nameMode());
+    state.put("idle",ui.prefs.getInt("idle",2)).put("name_mode",ui.nameMode()).put("weather",ui.weather.state());
     return state;
   }
   private byte[] asset() throws IOException {

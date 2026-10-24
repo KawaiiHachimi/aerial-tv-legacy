@@ -10,11 +10,9 @@ import android.graphics.RectF;
 import android.os.Handler;
 import org.json.JSONObject;
 import java.io.*;
-import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import javax.net.ssl.*;
 
 /** Bounded image cache. Network, decoding and crop work always run outside the UI thread. */
 final class WallpaperStore {
@@ -24,9 +22,9 @@ final class WallpaperStore {
   private final Runnable changed;
   private volatile boolean closed, fetching;
   private long lastAttempt;
-  private SSLSocketFactory bingTls;
-  WallpaperStore(Context c, SharedPreferences p, Handler h, Runnable callback) {
-    context = c.getApplicationContext(); prefs = p; main = h; changed = callback;
+  private final LegacyHttp http;
+  WallpaperStore(Context c, SharedPreferences p, Handler h, Runnable callback, LegacyHttp http) {
+    context = c.getApplicationContext(); prefs = p; main = h; changed = callback; this.http = http;
   }
   String source() { return prefs.getString("wallpaper_source", "builtin"); }
   File image(String source) { return new File(context.getFilesDir(), "wallpaper-" + source + ".jpg"); }
@@ -106,12 +104,12 @@ final class WallpaperStore {
     fetching = true; lastAttempt = System.currentTimeMillis();
     new Thread(new Runnable() { @Override public void run() {
       try {
-        JSONObject item = new JSONObject(new String(get(
+        JSONObject item = new JSONObject(new String(http.get(
             "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN", 256*1024), "UTF-8"))
                 .getJSONArray("images").getJSONObject(0);
         String path = item.getString("url");
         if (!path.startsWith("/th?") && !path.startsWith("/th/")) throw new IOException("Unexpected Bing image URL");
-        byte[] bytes = get("https://cn.bing.com" + path, 8*1024*1024);
+        byte[] bytes = http.get("https://cn.bing.com" + path, 8*1024*1024);
         File temp = new File(context.getFilesDir(), "wallpaper-bing.tmp"); write(temp, bytes);
         Bitmap valid = decode(temp);
         if (valid == null) { temp.delete(); throw new IOException("Invalid Bing image"); }
@@ -131,38 +129,5 @@ final class WallpaperStore {
   String status() { return prefs.getString("bing_status", ""); }
   private static void write(File file, byte[] bytes) throws IOException {
     FileOutputStream out = new FileOutputStream(file); try { out.write(bytes); } finally { out.close(); }
-  }
-  // Modern TLS and public CA roots are scoped to Bing; certificate/hostname checks remain enabled.
-  private synchronized SSLSocketFactory bingTls() throws Exception {
-    if (bingTls != null) return bingTls;
-    java.security.KeyStore roots = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
-    roots.load(null, null);
-    java.security.cert.CertificateFactory certificates = java.security.cert.CertificateFactory.getInstance("X.509");
-    for (String name : new String[] {"Microsoft-RSA-Root-2017.crt", "Microsoft-ECC-Root-2017.crt", "DigiCert-Global-Root-G2.crt"}) {
-      InputStream in = context.getAssets().open("bing-ca/" + name);
-      try { roots.setCertificateEntry(name, certificates.generateCertificate(in)); } finally { in.close(); }
-    }
-    TrustManagerFactory trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    trust.init(roots);
-    SSLContext tls = SSLContext.getInstance("TLS", org.conscrypt.Conscrypt.newProvider());
-    tls.init(null, trust.getTrustManagers(), null);
-    bingTls = tls.getSocketFactory();
-    return bingTls;
-  }
-  private byte[] get(String url, int limit) throws Exception {
-    HttpsURLConnection c = (HttpsURLConnection) new URL(url).openConnection();
-    c.setSSLSocketFactory(bingTls());
-    c.setConnectTimeout(12000); c.setReadTimeout(18000); c.setInstanceFollowRedirects(false);
-    c.setRequestProperty("User-Agent", "Aerial-TV-Legacy/1.4");
-    try {
-      if (c.getResponseCode() != 200) throw new IOException("Bing HTTP " + c.getResponseCode());
-      if (c.getContentLength() > limit) throw new IOException("Image too large");
-      InputStream in = c.getInputStream();
-      try {
-        ByteArrayOutputStream out = new ByteArrayOutputStream(); byte[] buffer = new byte[8192]; int n;
-        while ((n=in.read(buffer))!=-1) { if (out.size()+n>limit) throw new IOException("Image too large"); out.write(buffer,0,n); }
-        return out.toByteArray();
-      } finally { in.close(); }
-    } finally { c.disconnect(); }
   }
 }

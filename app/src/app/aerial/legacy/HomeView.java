@@ -180,6 +180,8 @@ final class HomeView extends View {
   private final Paint solidPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Paint weatherIconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final TextPaint weatherPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
   private final TextPaint clockPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
   private final TextPaint datePaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
   private final TextPaint labelPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -212,6 +214,7 @@ final class HomeView extends View {
     ui = new DesktopUi(this);
     setBackgroundColor(0xFF14111E);
     clockPaint.setTypeface(AppFonts.regular(context));
+    weatherPaint.setTypeface(AppFonts.regular(context));
     clockPaint.setColor(0xFFFFFFFF);
     datePaint.setTypeface(AppFonts.regular(context));
     labelPaint.setTypeface(AppFonts.medium(context));
@@ -987,6 +990,28 @@ final class HomeView extends View {
       datePaint.setColor(withAlpha(alpha * 0.72f, 0xFF, 0xFF, 0xFF));
       canvas.drawText(dateText, dateX, dateBaseline, datePaint);
     }
+    drawWeather(canvas, x, ui.largeClock() ? baseline + d(70) : baseline + d(27), alpha);
+  }
+
+  private void drawWeather(Canvas canvas, float x, float baseline, float alpha) {
+    WeatherData.Reading reading = ui.weather.reading();
+    WeatherData.Place city = ui.weather.place();
+    if (reading == null || city == null) return;
+    boolean large = ui.largeClock(); float size = d(large ? 23 : 18);
+    WeatherIcons.draw(canvas, reading, x, baseline - size * .8f, size, alpha, weatherIconPaint);
+    weatherPaint.setTextSize(d(large ? 17 : 13));
+    weatherPaint.setColor(withAlpha(alpha * .9f, 255, 255, 255));
+    String line = city.name + "  " + reading.celsius + "°  " + getContext().getString(WeatherStore.kindLabel(reading.kind()));
+    String range = reading.high != null && reading.low != null
+        ? getContext().getString(R.string.weather_range, reading.high, reading.low) : "";
+    if (!large && !range.isEmpty()) line += "  ·  " + range;
+    if (ui.weather.cachedAfterFailure()) line += "  ·  " + getContext().getString(R.string.weather_cached);
+    line = ellipsize(line, weatherPaint, d(large ? 730 : 710));
+    canvas.drawText(line, x + size + d(8), baseline, weatherPaint);
+    if (large && !range.isEmpty()) {
+      weatherPaint.setTextSize(d(13));
+      canvas.drawText(range, x + size + d(8), baseline + d(24), weatherPaint);
+    }
   }
 
   private void drawChromeIcons(Canvas canvas) {
@@ -1386,6 +1411,7 @@ final class HomeView extends View {
   // ---- clock ----
 
   private void updateClock() {
+    ui.weather.refresh(false);
     Date now = new Date();
     clockText = new java.text.SimpleDateFormat("HH:mm", Locale.US).format(now);
     try {

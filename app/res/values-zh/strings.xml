@@ -51,7 +51,7 @@
     <string name="remote_hint">让桌面更合心意</string>
     <string name="personal_hint">上下选择设置|左右或确定更改|返回控制中心</string>
     <string name="compatibility_short">Aerial · Android 4.3 兼容版</string>
-    <string name="compatibility_note">支持必应每日壁纸、离线壁纸、手机传图和时钟屏保。本版本暂不支持航拍视频和天气。</string>
+    <string name="compatibility_note">支持必应壁纸、手机传图、天气和时钟屏保。本版本暂不支持航拍视频。</string>
     <string name="hidden_hint">按确定将应用重新显示在主屏幕</string>
     <string name="folder_hint">确定打开 · 菜单键整理</string>
     <string name="empty_collection">这里还没有应用</string>
@@ -64,4 +64,16 @@
     <string name="bing_unavailable">暂时无法获取必应壁纸，已保留上次图片或内置壁纸。</string>
     <string name="desktop_home">桌面</string>
     <string name="names_none">全部隐藏</string>
+    <string name="weather_settings">天气</string>
+    <string name="weather_choose_city">在手机设置城市</string>
+    <string name="weather_clear">晴</string>
+    <string name="weather_partly_cloudy">少云</string>
+    <string name="weather_cloudy">多云</string>
+    <string name="weather_fog">雾</string>
+    <string name="weather_rain">雨</string>
+    <string name="weather_snow">雪</string>
+    <string name="weather_thunder">雷雨</string>
+    <string name="weather_unknown">天气</string>
+    <string name="weather_range">最高 %1$d° · 最低 %2$d°</string>
+    <string name="weather_cached">缓存</string>
 </resources>
