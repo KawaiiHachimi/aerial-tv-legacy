@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.1-legacy18 — 2026-10-24
+
+- Use one generic app-card pipeline: prefer a valid TV banner, otherwise keep the original app icon with consistent sizing and a sampled-color background. No third-party package-specific recipes.
+- Read banner resources from the manifest on API18; reject square banners and render artwork at focused resolution.
+- Use the midpoint of each original Aerial system-card gradient as a solid background, with the original vector symbols and no added shadows.
+- Add cached daily Bing preview in the TV wallpaper picker and phone setup page, with asynchronous refresh.
+- Add physical API18 Canvas tests for system glyphs, original icon-color preservation, blank-icon fallback and Bing preview.
+
 ## 1.4.0-legacy18 — 2026-10-24
 
 - Add Bing daily wallpaper with API18-compatible HTTPS, verified CA roots, persistent cache and offline fallback.

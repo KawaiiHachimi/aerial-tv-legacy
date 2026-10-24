@@ -562,6 +562,7 @@ final class HomeView extends View {
   private List<AppEntry> loadApps(Context context) {
     PackageManager pm = context.getPackageManager();
     String self = context.getPackageName();
+    Map<String, SystemTiles.Kind> categoryTiles = SystemTiles.categories(pm);
     List<ResolveInfo> found = new ArrayList<ResolveInfo>();
     Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
     launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);
@@ -617,7 +618,7 @@ final class HomeView extends View {
         art = tileArt.get(artKey);
       }
       if (art == null) {
-        art = bakeTileArt(pm, info, ai.packageName);
+        art = bakeTileArt(pm, info, ai.packageName, categoryTiles.get(ai.packageName));
         if (art != null) {
           synchronized (tileArt) {
             tileArt.put(artKey, art);
@@ -705,39 +706,36 @@ final class HomeView extends View {
 
   // ---- tile artwork ----
 
-  private Bitmap bakeTileArt(PackageManager pm, ResolveInfo info, String packageName) {
-    int artW = Math.max(2, Math.round(tileWpx));
-    int artH = Math.max(2, Math.round(tileHpx));
+  private Bitmap bakeTileArt(PackageManager pm, ResolveInfo info, String packageName, SystemTiles.Kind category) {
+    int artW = Math.max(2, Math.round(tileWpx * 1.2f));
+    int artH = Math.max(2, Math.round(tileHpx * 1.2f));
     Bitmap art = Bitmap.createBitmap(artW, artH, Bitmap.Config.ARGB_8888);
     Canvas canvas = new Canvas(art);
     Path clip = new Path();
-    clip.addRoundRect(new RectF(0f, 0f, artW, artH), tileRadiusPx, tileRadiusPx, Path.Direction.CW);
+    clip.addRoundRect(new RectF(0f, 0f, artW, artH), tileRadiusPx * 1.2f, tileRadiusPx * 1.2f, Path.Direction.CW);
     canvas.save();
     canvas.clipPath(clip);
 
-    if (SystemTiles.draw(canvas, packageName, artW, artH)) {
-      canvas.restore();
-      return art;
-    }
+    boolean system = (info.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
     Bitmap banner = renderBanner(pm, info, artW, artH);
+    if (banner == null && system) {
+      SystemTiles.Kind kind = SystemTiles.of(packageName);
+      if (SystemTiles.draw(canvas, kind == null ? category : kind, artW, artH)) {
+        canvas.restore(); return art;
+      }
+    }
     if (banner != null) {
       canvas.drawBitmap(banner, 0f, 0f, bitmapPaint);
       banner.recycle();
     } else {
-      Bitmap icon = renderIcon(pm, info, Math.max(48, Math.round(artH * 0.8f)));
+      Drawable icon;
+      try { icon = info.loadIcon(pm); } catch (RuntimeException badIcon) { icon = null; }
       if (icon != null) {
-        drawArtGradient(canvas, artW, artH, tileBase(dominantColor(icon, packageName)));
-        drawArtIcon(canvas, icon, artW, artH);
-        icon.recycle();
+        AppTileArt.draw(canvas, icon, artW, artH);
       } else {
-        drawArtGradient(canvas, artW, artH, tileBase(fallbackColor(packageName)));
+        drawArtBackground(canvas, artW, artH, tileBase(fallbackColor(packageName)));
       }
     }
-    // Inner depth: the lower half of the tile darkens a little, under the icon.
-    Paint depth = new Paint(Paint.ANTI_ALIAS_FLAG);
-    depth.setShader(new LinearGradient(
-        0f, artH * 0.5f, 0f, artH, 0x00000000, 0x0E000000, Shader.TileMode.CLAMP));
-    canvas.drawRect(0f, 0f, artW, artH, depth);
     canvas.restore();
     return art;
   }
@@ -745,7 +743,7 @@ final class HomeView extends View {
   /**
    * Reads {@code android:banner} / {@code ApplicationInfo.banner} reflectively: those fields
    * only exist from API 21, but a firmware image may still carry a banner on a TV app. On
-   * Android 4.3 the lookup simply returns null and the tile falls back to icon artwork.
+   * Android 4.3 the manifest fallback reads the resource ID without requiring the newer fields.
    */
   private static Drawable loadBanner(PackageManager pm, ActivityInfo ai) {
     try {
@@ -754,14 +752,37 @@ final class HomeView extends View {
       if (resId == 0) {
         resId = bannerResource(app);
       }
-      if (resId != 0) {
-        Resources resources = pm.getResourcesForApplication(app);
-        return resources.getDrawable(resId);
-      }
+      Resources resources = pm.getResourcesForApplication(app);
+      if (resId == 0) resId = manifestBanner(resources, ai);
+      if (resId != 0) return resources.getDrawable(resId);
     } catch (Exception ignored) {
       // No banner, or the package went away mid-scan.
     }
     return null;
+  }
+
+  private static int manifestBanner(Resources resources, ActivityInfo activity) {
+    android.content.res.XmlResourceParser xml = null;
+    String android = "http://schemas.android.com/apk/res/android";
+    int applicationBanner = 0, activityBanner = 0;
+    try {
+      xml = resources.getAssets().openXmlResourceParser("AndroidManifest.xml");
+      while (xml.next() != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+        if (xml.getEventType() != org.xmlpull.v1.XmlPullParser.START_TAG) continue;
+        if ("application".equals(xml.getName()))
+          applicationBanner = xml.getAttributeResourceValue(android, "banner", 0);
+        if ("activity".equals(xml.getName()) || "activity-alias".equals(xml.getName())) {
+          String name = xml.getAttributeValue(android, "name");
+          if (name == null) continue;
+          if (name.startsWith(".")) name = activity.packageName + name;
+          else if (name.indexOf('.') < 0) name = activity.packageName + "." + name;
+          if (name.equals(activity.name)) activityBanner = xml.getAttributeResourceValue(android, "banner", 0);
+        }
+      }
+    } catch (Exception ignored) {
+      // A malformed manifest must not hide or crash an otherwise launchable app.
+    } finally { if (xml != null) xml.close(); }
+    return activityBanner != 0 ? activityBanner : applicationBanner;
   }
 
   private static int bannerResource(Object info) {
@@ -789,7 +810,7 @@ final class HomeView extends View {
     }
     int iw = banner.getIntrinsicWidth();
     int ih = banner.getIntrinsicHeight();
-    if (iw <= 0 || ih <= 0) {
+    if (iw <= 0 || ih <= 0 || iw < ih * 4f / 3f) {
       return null;
     }
     int cap = 1024;
@@ -826,67 +847,6 @@ final class HomeView extends View {
     return out;
   }
 
-  private Bitmap renderIcon(PackageManager pm, ResolveInfo info, int maxSize) {
-    Drawable drawable;
-    try {
-      drawable = info.loadIcon(pm);
-    } catch (RuntimeException badIcon) {
-      return null;
-    }
-    if (drawable == null) {
-      return null;
-    }
-    int sourceWidth = drawable.getIntrinsicWidth();
-    int sourceHeight = drawable.getIntrinsicHeight();
-    if (sourceWidth <= 0 || sourceHeight <= 0) {
-      sourceWidth = maxSize;
-      sourceHeight = maxSize;
-    }
-    Bitmap out = Bitmap.createBitmap(maxSize, maxSize, Bitmap.Config.ARGB_8888);
-    Canvas canvas = new Canvas(out);
-    float fit = Math.min(maxSize / (float) sourceWidth, maxSize / (float) sourceHeight);
-    int drawWidth = Math.max(1, Math.round(sourceWidth * fit));
-    int drawHeight = Math.max(1, Math.round(sourceHeight * fit));
-    int left = (maxSize - drawWidth) / 2;
-    int top = (maxSize - drawHeight) / 2;
-    drawable.setBounds(left, top, left + drawWidth, top + drawHeight);
-    drawable.draw(canvas);
-    return out;
-  }
-
-  /** Saturated-pixel average of the icon, so a tile takes on the app's own colour. */
-  private static int dominantColor(Bitmap icon, String packageName) {
-    int w = icon.getWidth();
-    int h = icon.getHeight();
-    int[] px = new int[w * h];
-    icon.getPixels(px, 0, w, 0, 0, w, h);
-    float[] hsv = new float[3];
-    double r = 0;
-    double g = 0;
-    double b = 0;
-    double weight = 0;
-    for (int i = 0; i < px.length; i += 2) {
-      int color = px[i];
-      if ((color >>> 24) < 160) {
-        continue;
-      }
-      Color.colorToHSV(color, hsv);
-      if (hsv[1] < 0.22f || hsv[2] < 0.15f) {
-        continue;
-      }
-      double wgt = hsv[1] * (0.4 + hsv[2] * 0.6);
-      r += ((color >> 16) & 0xFF) * wgt;
-      g += ((color >> 8) & 0xFF) * wgt;
-      b += (color & 0xFF) * wgt;
-      weight += wgt;
-    }
-    if (weight < 8) {
-      return fallbackColor(packageName);
-    }
-    return Color.rgb(
-        clamp255((int) (r / weight)), clamp255((int) (g / weight)), clamp255((int) (b / weight)));
-  }
-
   private static int fallbackColor(String packageName) {
     int hash = packageName.hashCode() & 0x7FFFFFFF;
     return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
@@ -901,34 +861,8 @@ final class HomeView extends View {
     return Color.HSVToColor(hsv);
   }
 
-  private static int scaleColor(int color, float factor) {
-    int r = clamp255(Math.round(((color >> 16) & 0xFF) * factor));
-    int g = clamp255(Math.round(((color >> 8) & 0xFF) * factor));
-    int b = clamp255(Math.round((color & 0xFF) * factor));
-    return 0xFF000000 | (r << 16) | (g << 8) | b;
-  }
-
-  private static int clamp255(int value) {
-    return value < 0 ? 0 : (value > 255 ? 255 : value);
-  }
-
-  private void drawArtGradient(Canvas canvas, int w, int h, int baseColor) {
-    Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    paint.setDither(true);
-    paint.setShader(new LinearGradient(0f, 0f, 0f, h, scaleColor(baseColor, 1.18f),
-        scaleColor(baseColor, 0.62f), Shader.TileMode.CLAMP));
-    canvas.drawRect(0f, 0f, w, h, paint);
-    paint.setShader(new RadialGradient(
-        w * 0.5f, -h * 0.2f, h * 1.45f, 0x38FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP));
-    canvas.drawRect(0f, 0f, w, h, paint);
-  }
-
-  private void drawArtIcon(Canvas canvas, Bitmap icon, int w, int h) {
-    float size = h * 0.50f;
-    float cx = w / 2f;
-    float cy = h / 2f;
-    RectF dst = new RectF(cx - size / 2f, cy - size / 2f, cx + size / 2f, cy + size / 2f);
-    canvas.drawBitmap(icon, null, dst, bitmapPaint);
+  private void drawArtBackground(Canvas canvas, int w, int h, int baseColor) {
+    SystemTiles.background(canvas, w, h, baseColor);
   }
 
   // ---- drawing ----

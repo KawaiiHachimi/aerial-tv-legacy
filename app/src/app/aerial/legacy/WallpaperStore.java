@@ -68,6 +68,7 @@ final class WallpaperStore {
     return scaled;
   }
   private Bitmap decode(File file) {
+    if (!file.isFile()) return null;
     try {
       BitmapFactory.Options opts = new BitmapFactory.Options(); opts.inJustDecodeBounds = true;
       BitmapFactory.decodeFile(file.getPath(), opts);
@@ -119,7 +120,7 @@ final class WallpaperStore {
         prefs.edit().putString("bing_date", new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date()))
             .putString("bing_caption", item.optString("copyright"))
             .putString("bing_status", "").apply();
-        if (source().equals("bing")) notifyChanged();
+        notifyChanged();
       } catch (Exception e) {
         android.util.Log.w("AerialWallpaper", "Bing refresh failed", e);
         prefs.edit().putString("bing_status", context.getString(R.string.bing_unavailable)).apply();

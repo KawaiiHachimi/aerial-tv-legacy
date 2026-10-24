@@ -69,7 +69,8 @@ final class DesktopUi {
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
   private final RectF bounds = new RectF();
   private final Bitmap[] thumbs = new Bitmap[Gradients.COUNT];
-  private Bitmap frost;
+  private Bitmap frost, dailyThumb;
+  private boolean previewsLoading, previewsAgain;
   private boolean armed;
   private int armedCode = -1, wakeCode = -1, saverEntryKey = -1;
   private long wakeUntil;
@@ -94,7 +95,12 @@ final class DesktopUi {
     home = owner;
     prefs = home.getContext().getSharedPreferences("desktop-v3", Context.MODE_PRIVATE);
     wallpapers = new WallpaperStore(home.getContext(), prefs, handler, new Runnable() {
-      @Override public void run() { if (!closed) home.changeWallpaper(); }
+      @Override public void run() {
+        if (!closed) {
+          home.changeWallpaper();
+          if (mode == WALLPAPERS) loadThumbs();
+        }
+      }
     });
     phone = new PhoneSetup(this);
     layout.decode(prefs.getString("layout", ""));
@@ -718,9 +724,14 @@ final class DesktopUi {
   }
   private String network() { return s(NetworkStatus.label(networkKind)); }
   private void loadThumbs() {
+    if (closed) return;
+    if (previewsLoading) { previewsAgain = true; return; }
+    previewsLoading = true;
+    wallpapers.refresh(false);
     new Thread(new Runnable() {
       @Override
       public void run() {
+        try {
         for (int i = 0; i < thumbs.length; i++) {
           if (closed)
             return;
@@ -738,6 +749,12 @@ final class DesktopUi {
             });
           }
         }
+        final Bitmap daily = wallpapers.preview("bing");
+        handler.post(new Runnable() { @Override public void run() {
+          if (!closed) { dailyThumb = daily; home.invalidate(); }
+          else if (daily != null) daily.recycle();
+        }});
+        } finally { handler.post(new Runnable() { @Override public void run() { previewsLoading = false; if (previewsAgain) { previewsAgain = false; loadThumbs(); } } }); }
       }
     }, "aerial-previews").start();
   }
@@ -884,7 +901,7 @@ final class DesktopUi {
     c.drawCircle(605, 447, 3, paint);
     line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.4.0", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.4.1", 832, 452, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {
@@ -927,12 +944,16 @@ final class DesktopUi {
       int first = Math.max(0, index / 5 - 2) * 5;
       for (int i = first; i < Math.min(first + 15, Gradients.COUNT + 2); i++) {
         float x = 40 + (i % 5) * 179, y = 239 + ((i - first) / 5) * 96;
-        if (i < Gradients.COUNT && thumbs[i] != null) {
+        Bitmap preview = i < Gradients.COUNT ? thumbs[i] : i == Gradients.COUNT ? dailyThumb : null;
+        if (preview != null) {
           c.save();
           Path path = new Path();
           path.addRoundRect(new RectF(x, y, x + 155, y + 70), 9, 9, Path.Direction.CW);
           c.clipPath(path);
-          c.drawBitmap(thumbs[i], null, new RectF(x, y, x + 155, y + 70), paint);
+          int cropHeight = Math.min(preview.getHeight(), Math.round(preview.getWidth() * 70f / 155f));
+          int top = (preview.getHeight() - cropHeight) / 2;
+          c.drawBitmap(preview, new android.graphics.Rect(0, top, preview.getWidth(), top + cropHeight),
+              new RectF(x, y, x + 155, y + 70), paint);
           c.restore();
         } else {
           paint.setColor(0xFF43435B);
@@ -953,7 +974,7 @@ final class DesktopUi {
           c.drawCircle(x + 141, y + 13, 8, paint);
           icon(c, 12, x + 136, y + 8, 10, 0xFF22222A);
         }
-        if (i >= Gradients.COUNT) icon(c, i == Gradients.COUNT ? 10 : 7, x+61, y+19, 32, 0xFFFFFFFF);
+        if (i >= Gradients.COUNT && preview == null) icon(c, i == Gradients.COUNT ? 10 : 7, x+61, y+19, 32, 0xFFFFFFFF);
         line(c, i < Gradients.COUNT ? labels[i] : s(i == Gradients.COUNT ? R.string.bing_daily : R.string.phone_setup),
             x, y + 88, 12, 0xFFFFFFFF);
       }

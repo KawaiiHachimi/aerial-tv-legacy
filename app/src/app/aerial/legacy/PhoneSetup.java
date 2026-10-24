@@ -153,6 +153,7 @@ final class PhoneSetup {
   private JSONObject state() throws Exception {
     JSONObject state=new JSONObject().put("source",ui.wallpapers.source()).put("preset",ui.preset())
         .put("photo",ui.wallpapers.hasPhoto()).put("caption",ui.wallpapers.caption())
+        .put("bing_stamp",ui.wallpapers.image("bing").lastModified())
         .put("busy",ui.wallpapers.fetching()).put("status",ui.wallpapers.status());
     for(String key:new String[]{"names","contrast","plate","large_clock","sounds"})
       state.put(key,ui.prefs.getBoolean(key,key.equals("contrast")||key.equals("plate")));
