@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1-legacy18 — 2026-10-24
+
+- Align the control-center date and network heading with the left edge of the controls below.
+- Refresh the control-center screenshot.
+
 ## 1.3-legacy18 — 2026-10-24
 
 - Extract the Android 4.3 launcher into its own standalone repository.

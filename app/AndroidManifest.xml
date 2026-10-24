@@ -2,8 +2,8 @@
 <!-- API18 HOME launcher. The optional LeTV compatibility bridge does not register HOME. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="app.aerial.legacy"
-    android:versionCode="4"
-    android:versionName="1.3-legacy18">
+    android:versionCode="5"
+    android:versionName="1.3.1-legacy18">
 
     <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18" />
 

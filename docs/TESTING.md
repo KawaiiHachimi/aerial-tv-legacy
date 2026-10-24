@@ -12,3 +12,9 @@ For version 1.3-legacy18 (2026-10-24):
 
 No hardware HDMI/source-switch, physical remote, real MStar GPU or physical-TV ADB test is implied.
 The APK does not enable network ADB. That is a separate firmware-level integration.
+
+## 1.3.1 visual adjustment
+
+The control-center header now uses the same visible left edge as the controls below.
+The APK was rebuilt against API18, host layout tests passed, and the updated native emulator
+screenshot was visually checked. This layout-only revision does not imply new hardware testing.

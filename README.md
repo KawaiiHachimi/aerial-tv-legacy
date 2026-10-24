@@ -14,7 +14,7 @@
 
 | 长按整理 | 控制中心 |
 | --- | --- |
-| ![应用菜单](docs/screenshots/menu.png) | ![控制中心](docs/screenshots/control-center.png) |
+| ![应用菜单](docs/screenshots/menu.png) | ![控制中心](docs/screenshots/control-center.png?v=1.3.1) |
 
 以上为 Android 4.3 模拟器的原生 1920×1080 屏幕截图，不代表电视真机验证。截图保留了模拟器的应用列表。
 

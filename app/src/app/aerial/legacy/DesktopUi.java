@@ -824,11 +824,13 @@ final class DesktopUi {
     bounds.set(568, 24, 928, 488);
     beginPanel(c, bounds, false);
     String date = DateFormat.getDateInstance(DateFormat.FULL).format(new Date());
-    line(c, date, 633, 61, 15, 0xFFFFFFFF);
-    line(c, network(), 633, 85, 12, 0xFFB8B8C0);
+    // Align the header with the visible left edge of the controls below (row inset + icon inset).
+    float contentLeft = 590f + 15f;
+    line(c, date, contentLeft, 61, 15, 0xFFFFFFFF);
+    line(c, network(), contentLeft, 85, 12, 0xFFB8B8C0);
     int[] labels = {R.string.cc_inputs, R.string.cc_network, R.string.cc_settings};
     for (int i = 0; i < 3; i++) {
-      float x = 634 + i * 110;
+      float x = contentLeft + 29f + i * 110;
       boolean f = index == i;
       paint.setColor(f ? 0xFFF5F5F7 : 0xFF4A4A52);
       c.drawCircle(x, 136, 29, paint);
@@ -852,7 +854,7 @@ final class DesktopUi {
     c.drawCircle(605, 447, 3, paint);
     line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.3", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.3.1", 832, 452, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {
