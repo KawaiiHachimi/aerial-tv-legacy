@@ -22,7 +22,7 @@ final class LegacyDesktop {
         api.getMethod("setAllDesktopNames", String[].class).invoke(manager, (Object) names);
       }
       Object main = api.getMethod("getMainDesktopTag").invoke(manager);
-      if (main == null || "".equals(main))
+      if (main == null || "".equals(main) || java.util.Arrays.equals(tags, new String[] {"signal", "app"}))
         api.getMethod("setMainDesktopTag", String.class).invoke(manager, "app");
       if (shown) {
         api.getMethod("setCurrentDesktopScreen", String.class).invoke(manager, "app");
@@ -32,6 +32,19 @@ final class LegacyDesktop {
       // The LeTV extension is absent on other Android devices.
     } catch (Exception unavailable) {
       Log.w("AerialInputs", "EUI desktop initialization failed", unavailable);
+    } catch (LinkageError unavailable) {
+      Log.w("AerialInputs", "EUI desktop API unavailable", unavailable);
+    }
+  }
+  static void onHidden() {
+    try {
+      Class<?> api = Class.forName("letv.desktop.DesktopManager");
+      Object manager = api.getMethod("get").invoke(null);
+      api.getMethod("setCurrentDesktopVisibility", boolean.class).invoke(manager, false);
+    } catch (ClassNotFoundException genericAndroid) {
+      // Generic API18 device.
+    } catch (Exception unavailable) {
+      Log.w("AerialInputs", "Cannot mark EUI desktop hidden", unavailable);
     } catch (LinkageError unavailable) {
       Log.w("AerialInputs", "EUI desktop API unavailable", unavailable);
     }

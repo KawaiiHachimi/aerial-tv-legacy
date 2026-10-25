@@ -14,3 +14,9 @@ This is the independent Android 4.3 / API18 port, not the Compose upstream appli
 - Do not commit local/, build/, dist/, signing keys, device addresses, proprietary firmware or logs.
 - Run ./tests/run.sh and ./build.sh. API18 instrumentation is documented in README.md.
 - Distinguish emulator/render evidence from real TV and hardware verification.
+- For this S40 Air task, before EVERY live-TV APK install or runtime test, first open
+  `com.bilibili.tv/.ui.main.MainActivity` and confirm Bilibili is the focused app/window.
+  This also applies to test APK installation and test startup. Updating or restarting
+  the launcher while it is foreground can hang the vendor system. Do not reuse an
+  earlier foreground check for a later operation. Host tests and isolated emulators
+  do not need this TV-specific preparation.

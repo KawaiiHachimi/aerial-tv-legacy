@@ -31,7 +31,8 @@ final class WeatherStore {
     } catch (RuntimeException invalidCache) { cached = null; }
   }
   private Double optional(String key) { int v = prefs.getInt(key, NONE); return v == NONE ? null : (double) v; }
-  boolean enabled() { return prefs.getBoolean("enabled", false); }
+  boolean enabled() { return prefs.getBoolean("enabled", true); }
+  boolean automatic() { return prefs.getBoolean("automatic", !prefs.contains("city")); }
   WeatherData.Place place() {
     try {
       return new WeatherData.Place(prefs.getString("city", ""), prefs.getString("region", ""),
@@ -58,14 +59,31 @@ final class WeatherStore {
   }
   synchronized void refresh(boolean force) {
     final WeatherData.Place city = place();
-    if (closed || !active || !enabled() || city == null || running) return;
+    final boolean locate = automatic() && (city == null || System.currentTimeMillis() < prefs.getLong("located_at", 0)
+        || System.currentTimeMillis() - prefs.getLong("located_at", 0) >= 24 * WeatherData.HOUR);
+    if (closed || !active || !enabled() || (city == null && !locate) || running) return;
     if (!force && !WeatherData.due(System.currentTimeMillis(), lastAttempt, failed)) return;
     if (force && lastAttempt > 0 && System.currentTimeMillis() - lastAttempt < 10000) return;
     lastAttempt = System.currentTimeMillis(); running = true;
     final int request = generation;
     task = worker.submit(new Runnable() { public void run() {
       try {
-        WeatherData.Reading result = api.fetch(city, System.currentTimeMillis());
+        WeatherData.Place resolved = city;
+        if (locate) {
+          try { resolved = api.locate(); }
+          catch (Exception unavailable) { if (city == null) throw unavailable; }
+          synchronized (WeatherStore.this) {
+            if (closed || !active || request != generation) return;
+            if (resolved != city) {
+              cached = null;
+              SharedPreferences.Editor edit = prefs.edit().putBoolean("automatic", true)
+                  .putLong("located_at", System.currentTimeMillis()).remove("fetched_at");
+              storePlace(edit, resolved); edit.apply();
+            }
+          }
+          notifyChanged();
+        }
+        WeatherData.Reading result = api.fetch(resolved, System.currentTimeMillis());
         synchronized (WeatherStore.this) {
           if (closed || !active || request != generation) return;
           cached = result; failed = false;
@@ -87,6 +105,10 @@ final class WeatherStore {
     notifyChanged();
   }
   List<WeatherData.Place> search(String name) throws Exception { return api.search(name); }
+  private static void storePlace(SharedPreferences.Editor edit, WeatherData.Place selected) {
+    edit.putString("city", selected.name).putString("region", selected.region)
+        .putString("latitude", Double.toString(selected.latitude)).putString("longitude", Double.toString(selected.longitude));
+  }
   synchronized void configure(JSONObject values) throws JSONException {
     if (closed || !active) throw new IllegalStateException("Home closed");
     WeatherData.Place selected = null;
@@ -99,8 +121,11 @@ final class WeatherStore {
     if (task != null) task.cancel(true);
     running = false; lastAttempt = 0; failed = false;
     SharedPreferences.Editor edit = prefs.edit();
-    if (selected != null) edit.putString("city", selected.name).putString("region", selected.region)
-        .putString("latitude", Double.toString(selected.latitude)).putString("longitude", Double.toString(selected.longitude));
+    if (selected != null) { storePlace(edit, selected); edit.putBoolean("automatic", false); }
+    if (values.optBoolean("automatic", false)) {
+      edit.putBoolean("automatic", true).remove("city").remove("region").remove("latitude").remove("longitude").remove("located_at");
+      newCity = true;
+    }
     if (newCity) { cached = null; edit.remove("fetched_at"); }
     if (values.has("enabled")) edit.putBoolean("enabled", values.getBoolean("enabled"));
     else if (selected != null) edit.putBoolean("enabled", true);
@@ -108,10 +133,12 @@ final class WeatherStore {
   }
   synchronized JSONObject state() throws JSONException {
     WeatherData.Place city = place(); WeatherData.Reading value = reading();
-    String status = !enabled() ? "disabled" : city == null ? "choose_city" : running ? "loading"
+    String status = !enabled() ? "disabled" : running ? (city == null ? "locating" : "loading")
+        : city == null ? (automatic() ? "location_unavailable" : "choose_city")
         : failed ? (value == null ? "unavailable" : "cached") : value == null ? "stale" : "ok";
     JSONObject data = new JSONObject().put("enabled", enabled()).put("city", city == null ? "" : city.name)
-        .put("region", city == null ? "" : city.region).put("status", status).put("provider", "Open-Meteo");
+        .put("region", city == null ? "" : city.region).put("status", status).put("provider", "Open-Meteo")
+        .put("automatic", automatic()).put("location_provider", "ipwho.is");
     if (value != null) data.put("temperature", value.celsius).put("kind", context.getString(kindLabel(value.kind())))
         .put("high", value.high == null ? JSONObject.NULL : value.high).put("low", value.low == null ? JSONObject.NULL : value.low)
         .put("fetched_at", value.fetchedAt);

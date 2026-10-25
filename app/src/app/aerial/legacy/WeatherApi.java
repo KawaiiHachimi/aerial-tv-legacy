@@ -13,6 +13,16 @@ final class WeatherApi {
   private final Assets assets;
   private CityCatalog cities;
   WeatherApi(Transport http, Assets assets) { this.http = http; this.assets = assets; }
+  WeatherData.Place locate() throws Exception {
+    // Omitting an address asks for the connection's public exit location. Do not request/store the IP itself.
+    return parseLocation(http.getText("https://ipwho.is/?fields=success,message,city,region,latitude,longitude&lang=zh-CN"));
+  }
+  static WeatherData.Place parseLocation(String text) throws Exception {
+    JSONObject value = new JSONObject(text);
+    if (!value.getBoolean("success")) throw new IOException("Network location unavailable");
+    return new WeatherData.Place(value.getString("city"), value.optString("region"),
+        value.getDouble("latitude"), value.getDouble("longitude"));
+  }
   List<WeatherData.Place> search(String name) throws Exception {
     name = name.trim();
     if (name.isEmpty() || name.length() > 80) throw new IllegalArgumentException("Invalid city name");

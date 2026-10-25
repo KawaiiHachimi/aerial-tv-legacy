@@ -41,6 +41,7 @@ class LegacyHttp implements WeatherApi.Transport {
         || url.getUserInfo() != null) throw new IOException("HTTPS required");
     if ("cn.bing.com".equals(url.getHost())) return "bing";
     if ("api.open-meteo.com".equals(url.getHost()) || "geocoding-api.open-meteo.com".equals(url.getHost())) return "weather";
+    if ("ipwho.is".equals(url.getHost())) return "location";
     throw new IOException("Unknown data source");
   }
   private synchronized SSLSocketFactory factory(String group) throws Exception {
@@ -48,6 +49,7 @@ class LegacyHttp implements WeatherApi.Transport {
     if (result != null) return result;
     String[] names = "bing".equals(group)
         ? new String[]{"Microsoft-RSA-Root-2017.crt", "Microsoft-ECC-Root-2017.crt", "DigiCert-Global-Root-G2.crt"}
+        : "location".equals(group) ? new String[]{"GTS-Root-R4.crt"}
         : new String[]{"ISRG-Root-X1.crt", "ISRG-Root-X2.crt"};
     KeyStore roots = KeyStore.getInstance(KeyStore.getDefaultType()); roots.load(null, null);
     CertificateFactory certificates = CertificateFactory.getInstance("X.509");
@@ -56,7 +58,15 @@ class LegacyHttp implements WeatherApi.Transport {
       try { roots.setCertificateEntry(name, certificates.generateCertificate(in)); } finally { in.close(); }
     }
     TrustManagerFactory trust = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()); trust.init(roots);
-    SSLContext tls = newTlsContext(); tls.init(null, trust.getTrustManagers(), null);
+    SSLContext tls;
+    try {
+      tls = newTlsContext();
+    } catch (LinkageError unavailable) {
+      // API18 preinstalled APKs need their native library in /system/lib. Keep the
+      // desktop usable if a firmware integrator omitted it or supplied the wrong ABI.
+      throw new IOException("HTTPS native library unavailable", unavailable);
+    }
+    tls.init(null, trust.getTrustManagers(), null);
     result = tls.getSocketFactory(); factories.put(group, result); return result;
   }
   // Overridden only by host tests, where Android's native Conscrypt cannot load on macOS.

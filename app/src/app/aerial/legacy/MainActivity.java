@@ -39,6 +39,7 @@ public final class MainActivity extends Activity {
 
   @Override
   protected void onPause() {
+    LegacyDesktop.onHidden();
     if (home != null)
       home.onHidden();
     super.onPause();

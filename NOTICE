@@ -34,3 +34,7 @@ Chinese city table: GeoNames, https://www.geonames.org/, CC BY 4.0,
 
 JSON-java 20240303, public domain, https://github.com/stleary/JSON-java/tree/20240303.
   Host tests only; not packaged in the APK. Provenance and checksum in tests/lib/.
+
+Optional/manual-overridable IP city lookup: ipwho.is, https://ipwhois.io/documentation.
+  The service sees the request's public exit IP; the application does not request/store the raw IP field.
+  Public Google Trust Services CA provenance: app/assets/location-ca/README.txt.

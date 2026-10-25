@@ -531,24 +531,32 @@ final class DesktopUi {
     if (mode == CONTROL) {
       switch (index) {
         case 0:
-          if (!LegacyInputs.open(home.getContext())) {
-          home.openPackages(new String[] {"mstar.tvsetting.ui"}, Settings.ACTION_SETTINGS);
-        }
+          if (!LegacySettings.open(home.getContext(), 2) && !LegacyInputs.open(home.getContext())) {
+            home.openPackages(new String[] {"mstar.tvsetting.ui"}, Settings.ACTION_SETTINGS);
+          }
           close();
           break;
         case 1:
-          home.openPackages(
+          if (!LegacySettings.open(home.getContext(), 3)) home.openPackages(
               new String[] {"com.stv.t2.globalsetting"}, Settings.ACTION_WIFI_SETTINGS);
           close();
           break;
         case 2:
-        case 4:
           home.openPackages(new String[] {"com.stv.t2.globalsetting", "mstar.tvsetting.ui"},
               Settings.ACTION_SETTINGS);
           close();
           break;
+        case 4:
+          if (!LegacySettings.open(home.getContext(), 0)) {
+            home.openPackages(new String[] {"com.stv.t2.globalsetting", "mstar.tvsetting.ui"},
+                Settings.ACTION_DISPLAY_SETTINGS);
+          }
+          close();
+          break;
         case 3:
-          changeVolume(1);
+          if (!LegacySettings.open(home.getContext(), 1))
+            home.openPackages(new String[] {"com.stv.t2.globalsetting"}, Settings.ACTION_SOUND_SETTINGS);
+          close();
           break;
         case 5:
           open(PERSONAL, 0);
@@ -915,7 +923,7 @@ final class DesktopUi {
     c.drawCircle(605, 447, 3, paint);
     line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.5.0", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.5.1", 832, 452, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {
@@ -928,7 +936,7 @@ final class DesktopUi {
     switch (at) {
       case 11:
         WeatherData.Place city = weather.place();
-        return city == null ? s(R.string.weather_choose_city) : city.name;
+        return city == null ? s(weather.automatic() ? R.string.weather_network_location : R.string.weather_choose_city) : city.name;
       case 0:
         return wallpapers.source().equals("builtin") ? s(R.string.wallpaper_names).split("\\|")[preset()]
             : s(wallpapers.source().equals("bing") ? R.string.bing_daily : R.string.phone_photo);

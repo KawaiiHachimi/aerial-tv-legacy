@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.1-legacy18 — 2026-10-25
+
+- Enable weather and IP-based city lookup by default on a fresh configuration; cache location for a day, preserve manual-city/off preferences and allow returning to automatic location from phone setup.
+- Add host-scoped Google Trust Services roots for ipwho.is; keep normal HTTPS verification and avoid requesting/logging the raw IP address.
+- Convert missing/failed Conscrypt native initialization into a recoverable network error instead of crashing the wallpaper worker.
+- Document API18 preinstalled JNI placement and add a bounded root setup-completion script for dedicated TV firmware that removed its original setup application; unfinished provisioning can suppress HOME.
+- Keep EUI's main desktop on Aerial and report hidden state when another app opens. Route network and inputs to their EUI panels; picture/sound fall back to the same eight-item settings panel because their dialogs are private.
+- Add automatic-location/manual-override/cache tests and a headless API18 TLS probe that validates /system/lib lookup without an APK update.
+
 ## 1.5.0-legacy18 — 2026-10-24
 
 - Port Open-Meteo weather: manual city selection, current temperature, day/night glyphs and daily high/low in both Home clock layouts.

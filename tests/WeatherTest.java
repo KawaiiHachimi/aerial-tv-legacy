@@ -48,6 +48,15 @@ public final class WeatherTest {
       try{LegacyHttp.group(new URL(invalid));throw new AssertionError("Untrusted URL accepted");}catch(IOException expected){checks++;}
     }
     lifecycle(root);
+    automaticLocation(root);
+    for (final boolean missingClass : new boolean[]{false,true}) {
+      LegacyHttp unavailable=new LegacyHttp(assets(root)){protected SSLContext newTlsContext(){
+        if(missingClass)throw new NoClassDefFoundError("Failed native initializer fixture");
+        throw new UnsatisfiedLinkError("Missing firmware library fixture");
+      }};
+      try{unavailable.getText("https://api.open-meteo.com/v1/forecast");throw new AssertionError("Native failure escaped as success");}
+      catch(IOException expected){check(expected.getCause() instanceof LinkageError,"missing native TLS becomes recoverable I/O failure");}
+    }
     boolean probeLive=args.length>1&&args[1].equals("--live");
     if(probeLive)live(root);
     System.out.println("Weather: "+checks+" checks passed"+(probeLive?" (including live HTTPS probes)":""));
@@ -61,9 +70,10 @@ public final class WeatherTest {
       if(call==1){firstStarted.countDown();while(releaseFirst.getCount()>0)try{releaseFirst.await();}catch(InterruptedException deliberateSlowIo){}}
       if(fail.get())throw new IOException("offline fixture");return fixture(call==1?11:22);
     }};
-    final Context context=new Context();final WeatherStore store=new WeatherStore(context,new Handler(),new Runnable(){public void run(){notifications.incrementAndGet();}},new WeatherApi(transport,assets(root)));
+    final Context context=new Context();context.getSharedPreferences("weather-v1",0).edit().putBoolean("enabled",false).commit();
+    final WeatherStore store=new WeatherStore(context,new Handler(),new Runnable(){public void run(){notifications.incrementAndGet();}},new WeatherApi(transport,assets(root)));
     try{
-      store.onShown();check(calls.get()==0,"unconfigured weather does not query location or forecast");
+      store.onShown();check(calls.get()==0,"disabled weather does not query location or forecast");
       store.configure(new JSONObject("{\"name\":\"First\",\"latitude\":1,\"longitude\":2}"));check(firstStarted.await(2,TimeUnit.SECONDS),"first forecast started");
       store.configure(new JSONObject("{\"name\":\"Second\",\"latitude\":3,\"longitude\":4}"));check(store.reading()==null,"old city's cache removed immediately");
       releaseFirst.countDown();await(new Callable<Boolean>(){public Boolean call(){return store.reading()!=null;}},"second forecast completed");
@@ -79,6 +89,40 @@ public final class WeatherTest {
       try{check(expired.reading()==null,"expired cache is hidden after recreation");}finally{expired.close();}
       store.onShown();store.configure(new JSONObject("{\"enabled\":false}"));check(store.reading()==null&&!store.enabled(),"weather can be disabled without losing city");
     }finally{releaseFirst.countDown();store.close();}
+  }
+  private static void automaticLocation(File root)throws Exception {
+    final AtomicInteger locations=new AtomicInteger(),forecasts=new AtomicInteger();
+    final AtomicBoolean failLocation=new AtomicBoolean();
+    WeatherApi.Transport transport=new WeatherApi.Transport(){public String getText(String url)throws Exception{
+      if(url.startsWith("https://ipwho.is/")){
+        locations.incrementAndGet();check(!url.contains("fields=ip"),"raw IP field is not requested");
+        if(failLocation.get())throw new IOException("Location outage fixture");
+        return "{\"success\":true,\"city\":\"Fixture city\",\"region\":\"Fixture region\",\"latitude\":30,\"longitude\":120}";
+      }
+      forecasts.incrementAndGet();return fixture(22);
+    }};
+    Context context=new Context();final WeatherStore store=new WeatherStore(context,new Handler(),new Runnable(){public void run(){}},new WeatherApi(transport,assets(root)));
+    try{
+      check(store.enabled()&&store.automatic(),"fresh install defaults to weather and IP location");
+      store.onShown();await(new Callable<Boolean>(){public Boolean call(){return store.reading()!=null;}},"automatic first forecast");
+      check(locations.get()==1&&store.place().name.equals("Fixture city"),"network city is saved");
+      store.configure(new JSONObject("{\"enabled\":true}"));
+      await(new Callable<Boolean>(){public Boolean call()throws Exception{return forecasts.get()>=2&&store.state().getString("status").equals("ok");}},"cached-location forecast");
+      check(locations.get()==1,"location is cached for the day");
+      store.configure(new JSONObject("{\"name\":\"Manual city\",\"latitude\":1,\"longitude\":2}"));
+      await(new Callable<Boolean>(){public Boolean call(){return store.reading()!=null;}},"manual forecast");
+      check(!store.automatic()&&store.place().name.equals("Manual city"),"manual choice overrides automatic location");
+      store.configure(new JSONObject("{\"automatic\":true,\"enabled\":true}"));
+      await(new Callable<Boolean>(){public Boolean call(){return store.reading()!=null&&locations.get()==2;}},"automatic location restored");
+      check(store.automatic()&&store.place().name.equals("Fixture city"),"network-location action replaces manual city");
+      context.getSharedPreferences("weather-v1",0).edit().putLong("located_at",1).commit();failLocation.set(true);
+      store.configure(new JSONObject("{\"enabled\":true}"));
+      await(new Callable<Boolean>(){public Boolean call()throws Exception{return locations.get()==3&&store.state().getString("status").equals("ok");}},"last city survives location outage");
+      store.configure(new JSONObject("{\"enabled\":false}"));store.onHidden();int count=locations.get()+forecasts.get();store.refresh(true);
+      check(locations.get()+forecasts.get()==count&&store.reading()==null,"disabled and hidden weather has no network activity");
+    }finally{store.close();}
+    try{WeatherApi.parseLocation("{\"success\":false}");throw new AssertionError("Failed location accepted");}catch(IOException expected){checks++;}
+    try{WeatherApi.parseLocation("{\"success\":true,\"city\":\"Bad\",\"latitude\":999,\"longitude\":0}");throw new AssertionError("Invalid location accepted");}catch(IllegalArgumentException expected){checks++;}
   }
   private static void live(final File root)throws Exception{
     LegacyHttp http=new LegacyHttp(assets(root)){protected SSLContext newTlsContext()throws Exception{return SSLContext.getInstance("TLS");}};
