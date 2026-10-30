@@ -21,7 +21,6 @@
     <string name="cc_network">Мережа</string>
     <string name="cc_settings">Налаштування</string>
     <string name="cc_volume">Звук</string>
-    <string name="cc_picture">Зображення</string>
     <string name="cc_personalize">Персоналізація</string>
     <string name="network_wifi">Wi-Fi connected</string>
     <string name="network_ethernet">Ethernet connected</string>

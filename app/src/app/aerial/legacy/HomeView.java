@@ -1264,10 +1264,6 @@ final class HomeView extends View {
       if (startSafely(i))
         return;
     }
-    if (Settings.ACTION_DISPLAY_SETTINGS.equals(action)) {
-      Intent i = new Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      if (startSafely(i)) return;
-    }
     for (String p : packages) {
       Intent i = getContext().getPackageManager().getLaunchIntentForPackage(p);
       if (i != null && startSafely(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)))

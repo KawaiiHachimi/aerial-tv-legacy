@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.2-legacy18 — 2026-10-30
+
+- Remove Picture from Control Center and compact the remaining rows.
+- Make Sound a non-focusable volume indicator that refreshes on system volume changes; remove its settings action and left/right volume adjustment.
+- Remove unused picture translations, settings fallbacks and the obsolete device-test volume adjustment.
+
 ## 1.5.1-legacy18 — 2026-10-25
 
 - Enable weather and IP-based city lookup by default on a fresh configuration; cache location for a day, preserve manual-city/off preferences and allow returning to automatic location from phone setup.

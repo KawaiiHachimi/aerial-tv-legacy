@@ -1,15 +1,13 @@
 package app.aerial.legacy;
 import android.content.*;
-import android.media.AudioManager;
 import android.os.SystemClock;
 import android.test.InstrumentationTestCase;
-import android.view.KeyEvent;
 import java.lang.reflect.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
 
-/** Targeted device tests: preserve settings/volume, never invoke HDMI or change networking. */
+/** Targeted device tests: preserve settings, never invoke HDMI or change networking. */
 public final class DeviceFeaturesTest extends InstrumentationTestCase {
   static MainActivity running; MainActivity activity; HomeView home;
   private void ui(Runnable r) { getInstrumentation().runOnMainSync(r); }
@@ -48,16 +46,7 @@ public final class DeviceFeaturesTest extends InstrumentationTestCase {
   }
   public void testWallpaperAndLanSetup() throws Exception {
     launch(); final Map<String,?> saved=home.ui.prefs.getAll();
-    final AudioManager audio=(AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
-    final int before=audio.getStreamVolume(AudioManager.STREAM_MUSIC);
     try {
-      ui(new Runnable(){public void run(){home.resetHome();home.ui.control();home.ui.index=3;}});
-      final int key=before>0?KeyEvent.KEYCODE_DPAD_LEFT:KeyEvent.KEYCODE_DPAD_RIGHT;
-      ui(new Runnable(){public void run(){long t=SystemClock.uptimeMillis();activity.dispatchKeyEvent(new KeyEvent(t,t,0,key,0));activity.dispatchKeyEvent(new KeyEvent(t,t+1,1,key,0));}});
-      SystemClock.sleep(700);
-      int after=audio.getStreamVolume(AudioManager.STREAM_MUSIC);
-      android.util.Log.i("AerialDeviceTest","volume before="+before+" after="+after+" max="+audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-      // Some EUI builds reject audio adjustment outside UID1000; that vendor limitation is separate.
       ui(new Runnable(){public void run(){home.resetHome();home.ui.mode=DesktopUi.NONE;home.ui.chromeFocused=false;}});
       SystemClock.sleep(500);
       ui(new Runnable(){public void run(){
@@ -91,7 +80,7 @@ public final class DeviceFeaturesTest extends InstrumentationTestCase {
         android.util.Log.i("AerialDeviceTest","EUI desktop tags initialized");
       }catch(ClassNotFoundException genericAndroid){}
     }finally {
-      ui(new Runnable(){public void run(){audio.setStreamVolume(AudioManager.STREAM_MUSIC,before,0);home.ui.phone.stop();android.content.SharedPreferences.Editor e=home.ui.prefs.edit().clear();for(Map.Entry<String,?> v:saved.entrySet()){Object o=v.getValue();String k=v.getKey();if(o instanceof String)e.putString(k,(String)o);else if(o instanceof Boolean)e.putBoolean(k,(Boolean)o);else if(o instanceof Integer)e.putInt(k,(Integer)o);else if(o instanceof Long)e.putLong(k,(Long)o);else if(o instanceof Float)e.putFloat(k,(Float)o);}e.commit();home.resetHome();}});
+      ui(new Runnable(){public void run(){home.ui.phone.stop();android.content.SharedPreferences.Editor e=home.ui.prefs.edit().clear();for(Map.Entry<String,?> v:saved.entrySet()){Object o=v.getValue();String k=v.getKey();if(o instanceof String)e.putString(k,(String)o);else if(o instanceof Boolean)e.putBoolean(k,(Boolean)o);else if(o instanceof Integer)e.putInt(k,(Integer)o);else if(o instanceof Long)e.putLong(k,(Long)o);else if(o instanceof Float)e.putFloat(k,(Float)o);}e.commit();home.resetHome();}});
     }
   }
   private static final class JSONObjectResult {int code;String text;}

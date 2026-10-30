@@ -2,8 +2,8 @@
 <!-- API18 HOME launcher. The optional LeTV bridge accepts low-priority package-scoped HOME requests. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="app.aerial.legacy"
-    android:versionCode="9"
-    android:versionName="1.5.1-legacy18">
+    android:versionCode="10"
+    android:versionName="1.5.2-legacy18">
 
     <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="18" />
 

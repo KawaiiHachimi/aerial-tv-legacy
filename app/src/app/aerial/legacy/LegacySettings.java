@@ -6,13 +6,12 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.util.Log;
 
-/** The first four categories of EUI's eight-item settings panel. */
+/** EUI's signal-source and network panels. */
 final class LegacySettings {
   static boolean open(Context context, int section) {
-    if (section < 0 || section > 3) return false;
-    // Picture and sound are private dialogs: use the vendor's main panel as the fallback.
+    if (section != 2 && section != 3) return false;
     String action = section == 2 ? "com.letv.action.source"
-        : section == 3 ? "com.letv.action.network" : "com.letv.action.setting";
+        : "com.letv.action.network";
     ComponentName receiver = new ComponentName("com.stv.t2.globalsetting",
         "com.stv.t2.globalsetting.GlobalReceiver");
     try {

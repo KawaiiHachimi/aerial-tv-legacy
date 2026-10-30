@@ -50,9 +50,12 @@ final class DesktopUi {
   final Handler handler = new Handler(Looper.getMainLooper());
   int mode, index, column;
   int networkKind;
-  private boolean networkRegistered;
-  private final android.content.BroadcastReceiver networkReceiver = new android.content.BroadcastReceiver() {
-    @Override public void onReceive(Context context, Intent intent) { refreshNetwork(); }
+  private boolean statusRegistered;
+  private final android.content.BroadcastReceiver statusReceiver = new android.content.BroadcastReceiver() {
+    @Override public void onReceive(Context context, Intent intent) {
+      if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) refreshNetwork();
+      else home.invalidate();
+    }
   };
   void refreshNetwork() {
     networkKind = NetworkStatus.read(home.getContext());
@@ -144,10 +147,11 @@ final class DesktopUi {
     weather.onShown();
     refreshNetwork();
     if (wallpapers.source().equals("bing")) wallpapers.refresh(false);
-    if (!networkRegistered) {
-      home.getContext().registerReceiver(networkReceiver,
-          new android.content.IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-      networkRegistered = true;
+    if (!statusRegistered) {
+      android.content.IntentFilter filter = new android.content.IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+      filter.addAction("android.media.VOLUME_CHANGED_ACTION");
+      home.getContext().registerReceiver(statusReceiver, filter);
+      statusRegistered = true;
     }
     resetIdle();
   }
@@ -155,9 +159,9 @@ final class DesktopUi {
     active = false;
     weather.onHidden();
     phone.stop();
-    if (networkRegistered) {
-      home.getContext().unregisterReceiver(networkReceiver);
-      networkRegistered = false;
+    if (statusRegistered) {
+      home.getContext().unregisterReceiver(statusReceiver);
+      statusRegistered = false;
     }
     handler.removeCallbacks(idle);
     armed = false;
@@ -439,7 +443,7 @@ final class DesktopUi {
           return true;
         }
         if (mode == PERSONAL) {
-          open(CONTROL, 5);
+          open(CONTROL, 3);
           return true;
         }
         close();
@@ -487,9 +491,7 @@ final class DesktopUi {
       } else if (c == 19)
         index = index == 3 ? 0 : index - 1;
       else if (c == 20)
-        index = Math.min(6, index + 1);
-      else if (index == 3 && (c == 21 || c == 22))
-        changeVolume(c == 22 ? 1 : -1);
+        index = Math.min(4, index + 1);
       return;
     }
     int count = mode == APP  ? appRows().length
@@ -546,22 +548,10 @@ final class DesktopUi {
               Settings.ACTION_SETTINGS);
           close();
           break;
-        case 4:
-          if (!LegacySettings.open(home.getContext(), 0)) {
-            home.openPackages(new String[] {"com.stv.t2.globalsetting", "mstar.tvsetting.ui"},
-                Settings.ACTION_DISPLAY_SETTINGS);
-          }
-          close();
-          break;
         case 3:
-          if (!LegacySettings.open(home.getContext(), 1))
-            home.openPackages(new String[] {"com.stv.t2.globalsetting"}, Settings.ACTION_SOUND_SETTINGS);
-          close();
-          break;
-        case 5:
           open(PERSONAL, 0);
           break;
-        case 6:
+        case 4:
           showSaver();
           break;
       }
@@ -738,12 +728,6 @@ final class DesktopUi {
   private AudioManager audio() {
     return (AudioManager) home.getContext().getSystemService(Context.AUDIO_SERVICE);
   }
-  private void changeVolume(int delta) {
-    AudioManager a = audio();
-    if (a != null)
-      a.adjustStreamVolume(AudioManager.STREAM_MUSIC, delta > 0 ? 1 : -1, 0);
-    home.invalidate();
-  }
   private String network() { return s(NetworkStatus.label(networkKind)); }
   private void loadThumbs() {
     if (closed) return;
@@ -889,7 +873,7 @@ final class DesktopUi {
     endPanel(c);
   }
   private void drawControl(Canvas c) {
-    bounds.set(568, 24, 928, 488);
+    bounds.set(568, 24, 928, 436);
     beginPanel(c, bounds, false);
     String date = DateFormat.getDateInstance(DateFormat.FULL).format(new Date());
     // Align the header with the visible left edge of the controls below (row inset + icon inset).
@@ -910,20 +894,19 @@ final class DesktopUi {
     AudioManager a = audio();
     int volume = a == null ? 0 : a.getStreamVolume(AudioManager.STREAM_MUSIC),
         max = a == null ? 1 : a.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-    row(c, s(R.string.cc_volume), 8, 590, 209, 316, index == 3, false, null);
-    paint.setColor(index == 3 ? 0xFFCCCCD1 : 0xFF55555D);
+    row(c, s(R.string.cc_volume), 8, 590, 209, 316, false, false, null);
+    paint.setColor(0xFF55555D);
     c.drawRoundRect(new RectF(731, 228, 878, 234), 3, 3, paint);
-    paint.setColor(index == 3 ? 0xFF1D1D1F : 0xFFFFFFFF);
+    paint.setColor(0xFFFFFFFF);
     c.drawRoundRect(new RectF(731, 228, 731 + 147f * volume / Math.max(1, max), 234), 3, 3, paint);
-    if (index == 3) line(c, "‹  " + volume + " / " + max + "  ›", 731, 250, 10, 0xFFB8B8C0);
-    row(c, s(R.string.cc_picture), 9, 590, 261, 316, index == 4, false, "›");
-    row(c, s(R.string.cc_personalize), 10, 590, 313, 316, index == 5, false, "›");
-    row(c, s(R.string.saver_preview), 11, 590, 365, 316, index == 6, false, null);
+    line(c, volume + " / " + max, 731, 250, 10, 0xFFB8B8C0);
+    row(c, s(R.string.cc_personalize), 10, 590, 261, 316, index == 3, false, "›");
+    row(c, s(R.string.saver_preview), 11, 590, 313, 316, index == 4, false, null);
     paint.setColor(0xFF30D158);
-    c.drawCircle(605, 447, 3, paint);
-    line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 452, 11,
+    c.drawCircle(605, 395, 3, paint);
+    line(c, s(home.isDefaultHome() ? R.string.home_default : R.string.home_available), 616, 400, 11,
         0xFFB8B8C0);
-    line(c, "Aerial 1.5.1", 832, 452, 11, 0xFF9999A3);
+    line(c, "Aerial 1.5.2", 832, 400, 11, 0xFF9999A3);
     endPanel(c);
   }
   private String[] personalLabels() {

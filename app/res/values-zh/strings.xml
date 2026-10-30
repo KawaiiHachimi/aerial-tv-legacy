@@ -21,7 +21,6 @@
     <string name="cc_network">网络</string>
     <string name="cc_settings">设置</string>
     <string name="cc_volume">声音</string>
-    <string name="cc_picture">图像</string>
     <string name="cc_personalize">个性化</string>
     <string name="network_wifi">无线网络已连接</string>
     <string name="network_ethernet">有线网络已连接</string>
