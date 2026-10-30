@@ -73,7 +73,7 @@
     <string name="weather_snow">雪</string>
     <string name="weather_thunder">雷雨</string>
     <string name="weather_unknown">天气</string>
-    <string name="weather_range">最高 %1$d° · 最低 %2$d°</string>
+    <string name="weather_range">最高 %1$d℃ · 最低 %2$d℃</string>
     <string name="weather_cached">缓存</string>
     <string name="weather_network_location">网络定位</string>
 </resources>

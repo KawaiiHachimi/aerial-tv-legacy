@@ -73,7 +73,7 @@
     <string name="weather_snow">Сніг</string>
     <string name="weather_thunder">Гроза</string>
     <string name="weather_unknown">Погода</string>
-    <string name="weather_range">Макс. %1$d° · Мін. %2$d°</string>
+    <string name="weather_range">Макс. %1$d℃ · Мін. %2$d℃</string>
     <string name="weather_cached">кеш</string>
     <string name="weather_network_location">За мережею</string>
 </resources>

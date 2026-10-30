@@ -73,7 +73,7 @@
     <string name="weather_snow">Қар</string>
     <string name="weather_thunder">Найзағай</string>
     <string name="weather_unknown">Ауа райы</string>
-    <string name="weather_range">Ең жоғары %1$d° · Ең төмен %2$d°</string>
+    <string name="weather_range">Ең жоғары %1$d℃ · Ең төмен %2$d℃</string>
     <string name="weather_cached">кэш</string>
     <string name="weather_network_location">Желі арқылы</string>
 </resources>

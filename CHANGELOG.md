@@ -5,6 +5,7 @@
 - Remove Picture from Control Center and compact the remaining rows.
 - Make Sound a non-focusable volume indicator that refreshes on system volume changes; remove its settings action and left/right volume adjustment.
 - Remove unused picture translations, settings fallbacks and the obsolete device-test volume adjustment.
+- Display Celsius temperatures with ℃ on Home and phone setup, including daily highs/lows in all locales.
 
 ## 1.5.1-legacy18 — 2026-10-25
 

@@ -73,7 +73,7 @@
     <string name="weather_snow">Snow</string>
     <string name="weather_thunder">Thunderstorms</string>
     <string name="weather_unknown">Weather</string>
-    <string name="weather_range">High %1$d° · Low %2$d°</string>
+    <string name="weather_range">High %1$d℃ · Low %2$d℃</string>
     <string name="weather_cached">cached</string>
     <string name="weather_network_location">Network location</string>
 </resources>

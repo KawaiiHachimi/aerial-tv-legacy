@@ -1001,7 +1001,7 @@ final class HomeView extends View {
     WeatherIcons.draw(canvas, reading, x, baseline - size * .8f, size, alpha, weatherIconPaint);
     weatherPaint.setTextSize(d(large ? 17 : 13));
     weatherPaint.setColor(withAlpha(alpha * .9f, 255, 255, 255));
-    String line = city.name + "  " + reading.celsius + "°  " + getContext().getString(WeatherStore.kindLabel(reading.kind()));
+    String line = city.name + "  " + reading.celsius + "℃  " + getContext().getString(WeatherStore.kindLabel(reading.kind()));
     String range = reading.high != null && reading.low != null
         ? getContext().getString(R.string.weather_range, reading.high, reading.low) : "";
     if (!large && !range.isEmpty()) line += "  ·  " + range;
